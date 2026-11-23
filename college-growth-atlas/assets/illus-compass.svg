@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <!-- top knob -->
+  <circle cx="120" cy="38" r="10" fill="#ffffff" stroke="#1f3a2e" stroke-width="4"/>
+
+  <!-- body -->
+  <circle cx="120" cy="120" r="78" fill="#e6f2eb" stroke="#1f3a2e" stroke-width="4"/>
+  <circle cx="120" cy="120" r="62" fill="#ffffff" stroke="#3f7d5a" stroke-width="3.5"/>
+
+  <!-- ticks -->
+  <g fill="none" stroke="#508565" stroke-width="3" stroke-linecap="round">
+    <path d="M160 160 L153 153"/>
+    <path d="M80 160 L87 153"/>
+    <path d="M80 80 L87 87"/>
+    <path d="M160 80 L153 87"/>
+  </g>
+  <g fill="none" stroke="#1f3a2e" stroke-width="4" stroke-linecap="round">
+    <path d="M178 120 L164 120"/>
+    <path d="M120 178 L120 164"/>
+    <path d="M62 120 L76 120"/>
+    <path d="M120 62 L120 76"/>
+  </g>
+
+  <!-- needle -->
+  <g transform="rotate(-20 120 120)" stroke="#1f3a2e" stroke-width="3" stroke-linejoin="round">
+    <path d="M120 74 L132 120 L108 120 Z" fill="#d9806a"/>
+    <path d="M120 166 L132 120 L108 120 Z" fill="#a8cdb8"/>
+  </g>
+  <circle cx="120" cy="120" r="10" fill="#ffffff" stroke="#1f3a2e" stroke-width="4"/>
+
+  <!-- sparkles -->
+  <path d="M34 46 Q36 56 46 58 Q36 60 34 70 Q32 60 22 58 Q32 56 34 46 Z" fill="#c39a49"/>
+  <path d="M212 178 Q214 186 222 188 Q214 190 212 198 Q210 190 202 188 Q210 186 212 178 Z" fill="#c39a49" opacity=".7"/>
+</svg>

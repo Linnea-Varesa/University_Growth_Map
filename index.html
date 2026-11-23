@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>智体校园 · 组间休息引擎</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div class="brand">智体校园<span class="brand-sub">组间休息引擎</span></div>
+    <button id="btn-settings" class="hdr-btn" type="button">设置</button>
+  </header>
+  <main id="page" aria-live="polite"></main>
+  <footer id="fixed-note">科普参考，不替代专业诊疗</footer>
+  <nav id="tabbar">
+    <button class="tab" data-page="today" type="button"><span class="tab-ic">◉</span>今天</button>
+    <button class="tab" data-page="train" type="button"><span class="tab-ic">▣</span>训练</button>
+    <button class="tab" data-page="diet" type="button"><span class="tab-ic">◍</span>饮食</button>
+    <button class="tab" data-page="recipe" type="button"><span class="tab-ic">▤</span>食谱</button>
+    <button class="tab" data-page="ask" type="button"><span class="tab-ic">◈</span>问询</button>
+    <button class="tab" data-page="about" type="button"><span class="tab-ic">▦</span>说明</button>
+  </nav>
+</div>
+<div id="toast" hidden></div>
+<script src="data.js"></script>
+<script src="core.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,2908 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>大学成长地图 · 在线工作台</title>
+<meta name="description" content="面向在校大学生的四年记录与规划工作台：经历时间线、机会日历、方向星图与体验卡。数据保存在本地浏览器，打开即用。">
+<link href="data:," rel="icon">
+<style>
+/* ============================================================
+   大学成长地图 — 校园绿 × 极光液态玻璃
+   玻璃卡片漂浮在缓慢流动的绿/金/蓝极光之上
+   ============================================================ */
+:root{
+  /* Nudge 设计变量（外观 / 圆角 / 间距 / 字体 / 动效） */
+  --site-bg:#eef6f0;
+  --site-fg:#1f3a2e;
+  --site-accent:#3f7d5a;
+  --site-on-accent:#ffffff;
+  --site-surface:rgba(255,255,255,.6);
+  --site-muted:#64806f;
+  --site-border:rgba(31,58,46,.1);
+  --site-font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --site-radius:18px;
+  --site-space:1;
+  --site-type:1;
+  --site-motion:1;
+
+  /* 由设计变量派生的校园绿体系 */
+  --ink:var(--site-fg);
+  --ink-2:color-mix(in srgb, var(--site-fg) 80%, #ffffff);
+  --ink-3:var(--site-muted);
+  --deep:color-mix(in srgb, var(--site-accent) 80%, #10301f);
+  --green:var(--site-accent);
+  --mid:color-mix(in srgb, var(--site-accent) 82%, #ffffff);
+  --light:color-mix(in srgb, var(--site-accent) 62%, #ffffff);
+  --pale:color-mix(in srgb, var(--site-accent) 38%, #ffffff);
+  --lighter:color-mix(in srgb, var(--site-accent) 20%, #ffffff);
+  --paler:color-mix(in srgb, var(--site-accent) 10%, #ffffff);
+  --cream:var(--site-bg);
+  --white:#fff;
+  --gold:#c39a49;
+  --gold-2:#e3c37e;
+  --blue:#195578;
+  --blue-2:#7fb2d4;
+  --coral:#d9806a;
+  --line:var(--site-border);
+  --line-2:color-mix(in srgb, var(--site-border) 55%, transparent);
+  --radius:var(--site-radius);
+  --radius-s:calc(var(--site-radius) * .66);
+  --sans:var(--site-font);
+  --serif:"Songti SC","Noto Serif SC",Georgia,"Times New Roman",serif;
+
+  /* 玻璃材质 */
+  --glass:var(--site-surface);
+  --glass-soft:color-mix(in srgb, var(--site-surface) 55%, transparent);
+  --glass-strong:color-mix(in srgb, var(--site-surface) 72%, #ffffff);
+  --glass-edge:rgba(255,255,255,.72);
+  --glass-hairline:rgba(31,58,46,.07);
+  --blur:18px;
+  --shadow:0 1px 2px rgba(31,58,46,.05), 0 10px 30px -14px rgba(31,58,46,.22);
+  --shadow-lift:0 2px 6px rgba(31,58,46,.07), 0 22px 48px -20px rgba(31,58,46,.34);
+  --inset-hi:inset 0 1px 0 rgba(255,255,255,.85), inset 0 -1px 0 rgba(255,255,255,.25);
+
+  /* 动效时长（Nudge motion 缩放） */
+  --dur:calc(180ms * var(--site-motion));
+  --dur-2:calc(320ms * var(--site-motion));
+  --spring:cubic-bezier(.3,1.5,.45,1);
+  --spring-soft:cubic-bezier(.22,1.35,.36,1);
+  --ease-out:cubic-bezier(.2,.8,.3,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{scrollbar-color:color-mix(in srgb, var(--site-accent) 42%, transparent) transparent;scrollbar-width:thin}
+body{
+  font-family:var(--sans);
+  font-size:calc(14.5px * var(--site-type));
+  color:var(--ink);
+  background:var(--cream);
+  -webkit-font-smoothing:antialiased;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+::selection{background:var(--lighter);color:var(--deep)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{
+  background:color-mix(in srgb, var(--site-accent) 34%, transparent);
+  border-radius:99px;border:2.5px solid transparent;background-clip:content-box;
+}
+::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb, var(--site-accent) 58%, transparent);background-clip:content-box}
+:focus-visible{outline:2px solid color-mix(in srgb, var(--site-accent) 65%, transparent);outline-offset:2px;border-radius:6px}
+
+/* ---------------- 极光背景 ---------------- */
+.aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.aurora i{position:absolute;border-radius:50%;filter:blur(64px);opacity:.62;will-change:transform}
+.aurora .a1{
+  width:56vmax;height:56vmax;left:-16vmax;top:-20vmax;
+  background:radial-gradient(circle at 42% 42%, #b9e2c8 0%, #8fcba6 42%, transparent 70%);
+  animation:drift1 calc(34s * var(--site-motion)) ease-in-out infinite alternate;
+}
+.aurora .a2{
+  width:44vmax;height:44vmax;right:-14vmax;top:-8vmax;
+  background:radial-gradient(circle at 55% 45%, #f2dfae 0%, #e3c37e 40%, transparent 70%);
+  opacity:.5;animation:drift2 calc(41s * var(--site-motion)) ease-in-out infinite alternate;
+}
+.aurora .a3{
+  width:48vmax;height:48vmax;left:12vmax;bottom:-24vmax;
+  background:radial-gradient(circle at 50% 50%, #c4ddee 0%, #9cc4de 44%, transparent 70%);
+  opacity:.46;animation:drift3 calc(47s * var(--site-motion)) ease-in-out infinite alternate;
+}
+.aurora .a4{
+  width:34vmax;height:34vmax;right:4vmax;bottom:-10vmax;
+  background:radial-gradient(circle at 50% 50%, #d8efdf 0%, #a8cdb8 46%, transparent 70%);
+  opacity:.55;animation:drift4 calc(29s * var(--site-motion)) ease-in-out infinite alternate;
+}
+.aurora .a5{
+  width:22vmax;height:22vmax;left:44vw;top:26vh;
+  background:radial-gradient(circle at 50% 50%, #f6d9cd 0%, #eec0ae 45%, transparent 70%);
+  opacity:.3;animation:drift5 calc(37s * var(--site-motion)) ease-in-out infinite alternate;
+}
+@keyframes drift1{from{transform:translate(0,0) scale(1)}to{transform:translate(9vmax,7vmax) scale(1.18)}}
+@keyframes drift2{from{transform:translate(0,0) scale(1.05)}to{transform:translate(-8vmax,9vmax) scale(.9)}}
+@keyframes drift3{from{transform:translate(0,0) scale(.95)}to{transform:translate(10vmax,-7vmax) scale(1.15)}}
+@keyframes drift4{from{transform:translate(0,0) scale(1)}to{transform:translate(-7vmax,-9vmax) scale(1.22)}}
+@keyframes drift5{from{transform:translate(0,0) scale(1)}to{transform:translate(-12vmax,6vmax) scale(1.3)}}
+
+/* 手绘校园纹理 + 细颗粒，压在极光上 */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIj4KICA8cmVjdCB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgZmlsbD0iI2Y3ZmFmOCIvPgoKICA8IS0tIHNtYWxsIGRvdHMgLS0+CiAgPGcgZmlsbD0iI2NmZTZkOSI+CiAgICA8Y2lyY2xlIGN4PSIxMCIgY3k9IjEyIiByPSIyLjQiLz4KICAgIDxjaXJjbGUgY3g9IjQ2IiBjeT0iOCIgcj0iMiIvPgogICAgPGNpcmNsZSBjeD0iODYiIGN5PSIxNCIgcj0iMi40Ii8+CiAgICA8Y2lyY2xlIGN4PSIyNCIgY3k9IjQ0IiByPSIyIi8+CiAgICA8Y2lyY2xlIGN4PSI2NCIgY3k9IjM4IiByPSIyLjQiLz4KICAgIDxjaXJjbGUgY3g9IjEwNCIgY3k9IjQ0IiByPSIyIi8+CiAgICA8Y2lyY2xlIGN4PSIxMCIgY3k9Ijc2IiByPSIyLjQiLz4KICAgIDxjaXJjbGUgY3g9IjQ4IiBjeT0iNzIiIHI9IjIiLz4KICAgIDxjaXJjbGUgY3g9Ijg4IiBjeT0iNzgiIHI9IjIuNCIvPgogICAgPGNpcmNsZSBjeD0iMzAiIGN5PSIxMDYiIHI9IjIiLz4KICAgIDxjaXJjbGUgY3g9IjY4IiBjeT0iMTEwIiByPSIyLjQiLz4KICAgIDxjaXJjbGUgY3g9IjEwOCIgY3k9IjEwNCIgcj0iMiIvPgogIDwvZz4KCiAgPCEtLSBsZWF2ZXMgLS0+CiAgPGcgZmlsbD0iI2E4Y2RiOCI+CiAgICA8cGF0aCBkPSJNMzQgMjIgQzQwIDE4IDQ2IDI0IDQyIDMwIEMzNiAzNCAzMCAyOCAzNCAyMiBaIi8+CiAgICA8cGF0aCBkPSJNOTQgNTYgQzEwMCA1MiAxMDYgNTggMTAyIDY0IEM5NiA2OCA5MCA2MiA5NCA1NiBaIi8+CiAgICA8cGF0aCBkPSJNMjAgODggQzI2IDg0IDMyIDkwIDI4IDk2IEMyMiAxMDAgMTYgOTQgMjAgODggWiIvPgogICAgPHBhdGggZD0iTTc4IDEwMCBDODQgOTYgOTAgMTAyIDg2IDEwOCBDODAgMTEyIDc0IDEwNiA3OCAxMDAgWiIvPgogIDwvZz4KCiAgPCEtLSBzdGFycyAtLT4KICA8ZyBmaWxsPSIjYzM5YTQ5IiBvcGFjaXR5PSIuNSI+CiAgICA8cGF0aCBkPSJNNjAgNjIgUTYyIDY4IDY4IDcwIFE2MiA3MiA2MCA3OCBRNTggNzIgNTIgNzAgUTU4IDY4IDYwIDYyIFoiLz4KICAgIDxwYXRoIGQ9Ik0xMTIgMjQgUTExMy41IDI4LjUgMTE4IDMwIFExMTMuNSAzMS41IDExMiAzNiBRMTEwLjUgMzEuNSAxMDYgMzAgUTExMC41IDI4LjUgMTEyIDI0IFoiLz4KICAgIDxwYXRoIGQ9Ik0xNCA1NiBRMTUuNSA2MC41IDIwIDYyIFExNS41IDYzLjUgMTQgNjggUTEyLjUgNjMuNSA4IDYyIFExMi41IDYwLjUgMTQgNTYgWiIvPgogIDwvZz4KCiAgPCEtLSB0aW55IHN0cm9rZXMgLS0+CiAgPGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZTZmMmViIiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj4KICAgIDxwYXRoIGQ9Ik03MCAyMCBMODIgMjAiLz4KICAgIDxwYXRoIGQ9Ik02MiA5MiBMNzQgOTIiLz4KICAgIDxwYXRoIGQ9Ik00MCA2MCBMNTAgNjAiLz4KICA8L2c+Cjwvc3ZnPgo=);
+  background-size:120px 120px;
+  opacity:.28;mix-blend-mode:multiply;
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+img,svg{display:block;max-width:100%}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input,select,textarea{font:inherit;color:inherit}
+a{color:var(--blue)}
+h1,h2,h3,h4{margin:0;line-height:1.25;font-weight:700}
+
+.wrap{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:0 20px calc(56px * var(--site-space))}
+
+/* ---------------- 顶部导航（玻璃悬浮条） ---------------- */
+header.top{
+  position:sticky;top:0;z-index:50;
+  background:color-mix(in srgb, var(--site-bg) 62%, transparent);
+  backdrop-filter:saturate(1.6) blur(22px);
+  -webkit-backdrop-filter:saturate(1.6) blur(22px);
+  border-bottom:1px solid var(--glass-hairline);
+  box-shadow:0 6px 24px -18px rgba(31,58,46,.35), var(--inset-hi);
+}
+.top-inner{max-width:1240px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.02em}
+.brand .logo{width:34px;height:34px;flex:0 0 34px;filter:drop-shadow(0 2px 6px rgba(63,125,90,.3));animation:logoSway calc(7s * var(--site-motion)) ease-in-out infinite alternate}
+@keyframes logoSway{from{transform:rotate(-4deg)}to{transform:rotate(5deg)}}
+.brand small{display:block;font-weight:500;font-size:11px;color:var(--ink-3);letter-spacing:.14em}
+nav.tabs{
+  position:relative;display:flex;gap:4px;margin-left:auto;
+  background:var(--glass-soft);border:1px solid var(--glass-edge);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  padding:4px;border-radius:999px;overflow-x:auto;scrollbar-width:none;
+  box-shadow:inset 0 1px 3px rgba(31,58,46,.06), 0 4px 16px -10px rgba(31,58,46,.25);
+}
+nav.tabs::-webkit-scrollbar{display:none}
+.tab-glider{
+  position:absolute;top:4px;bottom:4px;left:0;width:0;z-index:0;
+  background:linear-gradient(160deg, rgba(255,255,255,.96), rgba(255,255,255,.78));
+  border-radius:999px;box-shadow:0 3px 12px -4px rgba(31,58,46,.3), var(--inset-hi);
+  transition:left calc(420ms * var(--site-motion)) var(--spring), width calc(420ms * var(--site-motion)) var(--spring);
+  pointer-events:none;
+}
+nav.tabs button{
+  position:relative;z-index:1;
+  display:flex;align-items:center;gap:7px;white-space:nowrap;
+  padding:8px 16px;border-radius:999px;font-size:14px;font-weight:600;color:var(--ink-2);
+  transition:color var(--dur) var(--ease-out), transform var(--dur) var(--spring);
+}
+nav.tabs button .num{font-size:10px;letter-spacing:.1em;opacity:.55;font-variant-numeric:tabular-nums}
+nav.tabs button:hover{color:var(--deep)}
+nav.tabs button:active{transform:scale(.93)}
+nav.tabs button.active{color:var(--deep)}
+nav.tabs button .badge{
+  background:var(--gold);color:#fff;font-size:10px;min-width:17px;height:17px;border-radius:9px;
+  display:inline-flex;align-items:center;justify-content:center;padding:0 5px;font-weight:700;
+}
+.sync-pill{
+  display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-2);
+  background:var(--glass-soft);border:1px solid var(--glass-edge);border-radius:999px;padding:5px 11px;white-space:nowrap;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:var(--inset-hi);
+}
+.sync-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--light);flex:0 0 7px;transition:background var(--dur)}
+.sync-pill.online .dot{background:#3fae6a;box-shadow:0 0 0 3px rgba(63,174,106,.18)}
+.sync-pill.local .dot{background:#3fae6a;box-shadow:0 0 0 3px rgba(63,174,106,.16);animation:breathe calc(3s * var(--site-motion)) ease-in-out infinite}
+.sync-pill.error .dot{background:var(--coral)}
+.sync-pill.busy .dot{background:var(--blue);animation:pulse calc(1s * var(--site-motion)) infinite}
+@keyframes pulse{50%{opacity:.25}}
+@keyframes breathe{50%{box-shadow:0 0 0 5px rgba(63,174,106,.08)}}
+.hdr-data{
+  display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-2);
+  background:var(--glass-soft);border:1px solid var(--glass-edge);border-radius:999px;padding:6px 13px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:transform var(--dur) var(--spring), color var(--dur), background var(--dur);
+  box-shadow:var(--inset-hi);
+}
+.hdr-data:hover{color:var(--deep);background:rgba(255,255,255,.8)}
+.hdr-data:active{transform:scale(.92)}
+
+/* ---------------- 视图与入场 ---------------- */
+.view{display:none}
+.view.active{display:block;animation:viewIn calc(380ms * var(--site-motion)) var(--ease-out)}
+@keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.pre{opacity:0;transform:translateY(22px) scale(.985)}
+.pre.in{
+  opacity:1;transform:none;
+  transition:opacity calc(460ms * var(--site-motion)) var(--ease-out), transform calc(620ms * var(--site-motion)) var(--spring-soft);
+  transition-delay:var(--d,0ms);
+}
+
+/* ---------------- 液态玻璃卡片 ---------------- */
+.card{
+  position:relative;overflow:hidden;
+  background:linear-gradient(150deg, color-mix(in srgb, var(--glass) 88%, #ffffff) 0%, var(--glass) 58%, color-mix(in srgb, var(--glass) 72%, transparent) 100%);
+  backdrop-filter:blur(var(--blur)) saturate(1.5);
+  -webkit-backdrop-filter:blur(var(--blur)) saturate(1.5);
+  border:1px solid var(--glass-edge);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow), var(--inset-hi), 0 0 0 1px var(--glass-hairline);
+  padding:calc(22px * var(--site-space));
+  transition:box-shadow var(--dur-2) var(--ease-out), transform var(--dur-2) var(--spring-soft);
+}
+.card + .card{margin-top:calc(16px * var(--site-space))}
+/* 指针跟随的液态高光 */
+.glowable::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;
+  background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,.5), rgba(255,255,255,.12) 42%, transparent 65%);
+  opacity:0;transition:opacity var(--dur-2) var(--ease-out);
+}
+.glowable:hover::after{opacity:1}
+.sec-head{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:calc(34px * var(--site-space)) 0 calc(14px * var(--site-space))}
+.sec-head .eyebrow{
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--light);
+  font-weight:700;display:block;margin-bottom:4px;
+}
+.sec-head h2{font-size:calc(21px * var(--site-type))}
+.sec-head .ops{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.sec-sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+
+/* ---------------- 按钮（果冻按压） ---------------- */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;justify-content:center;
+  padding:9px 16px;border-radius:calc(var(--site-radius) * .55);font-size:13.5px;font-weight:600;
+  background:linear-gradient(150deg, var(--light) 0%, var(--green) 55%, var(--deep) 130%);
+  color:var(--site-on-accent);white-space:nowrap;
+  border:1px solid color-mix(in srgb, var(--site-accent) 55%, transparent);
+  box-shadow:0 4px 14px -6px color-mix(in srgb, var(--site-accent) 65%, transparent), var(--inset-hi);
+  transition:transform var(--dur) var(--spring), box-shadow var(--dur) var(--ease-out), filter var(--dur);
+}
+.btn:hover{filter:brightness(1.06);transform:translateY(-2px);box-shadow:0 8px 22px -8px color-mix(in srgb, var(--site-accent) 70%, transparent), var(--inset-hi)}
+.btn:active{transform:scale(.92);filter:brightness(.97)}
+.btn.ghost{
+  background:var(--glass-soft);color:var(--ink-2);
+  border:1px solid var(--glass-edge);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  box-shadow:var(--inset-hi), 0 2px 8px -6px rgba(31,58,46,.3);
+}
+.btn.ghost:hover{background:rgba(255,255,255,.85);color:var(--deep);filter:none}
+.btn.sm{padding:6px 11px;font-size:12.5px;border-radius:calc(var(--site-radius) * .45)}
+.btn.danger{background:linear-gradient(150deg,#e89a86,var(--coral) 60%,#c06a54);border-color:rgba(192,106,84,.5);box-shadow:0 4px 14px -6px rgba(217,128,106,.6), var(--inset-hi)}
+.btn.danger:hover{filter:brightness(1.05)}
+.btn.gold{background:linear-gradient(150deg,var(--gold-2),var(--gold) 60%,#a9822f);border-color:rgba(169,130,47,.5);box-shadow:0 4px 14px -6px rgba(195,154,73,.65), var(--inset-hi)}
+.btn.gold:hover{filter:brightness(1.05)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.lnk{color:var(--deep);font-size:13px;font-weight:600;text-decoration:none;border-bottom:1px solid var(--lighter);transition:border-color var(--dur), color var(--dur)}
+.lnk:hover{border-color:var(--green)}
+.lnk.del{color:var(--coral);border-color:transparent}
+.lnk.del:hover{border-color:var(--coral)}
+.ops-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* ---------------- HERO ---------------- */
+.hero{
+  position:relative;border-radius:var(--radius);overflow:hidden;margin-top:calc(20px * var(--site-space));
+  background:linear-gradient(180deg, rgba(234,245,238,.85) 0%, rgba(247,250,248,.6) 100%);
+  border:1px solid var(--glass-edge);
+  box-shadow:var(--shadow), var(--inset-hi);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+.hero-bg{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom;opacity:.95;
+  animation:heroDrift calc(22s * var(--site-motion)) ease-in-out infinite alternate;
+}
+@keyframes heroDrift{from{transform:scale(1) translateY(0)}to{transform:scale(1.05) translateY(-6px)}}
+.hero::before{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(100deg,rgba(247,250,248,.97) 0%,rgba(247,250,248,.93) 34%,rgba(247,250,248,.62) 56%,rgba(247,250,248,.12) 78%,rgba(247,250,248,0) 100%);
+}
+/* 液态扫光 */
+.hero::after{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(115deg, transparent 38%, rgba(255,255,255,.4) 50%, transparent 62%);
+  background-size:260% 100%;
+  animation:sheen calc(9s * var(--site-motion)) ease-in-out infinite;
+}
+@keyframes sheen{0%,55%{background-position:120% 0}90%,100%{background-position:-60% 0}}
+.hero-inner{position:relative;z-index:2;padding:calc(34px * var(--site-space)) calc(30px * var(--site-space)) calc(30px * var(--site-space))}
+.hero h1{font-family:var(--serif);font-size:clamp(28px,5vw,calc(44px * var(--site-type)));letter-spacing:.02em;color:var(--deep)}
+.hero .tagline{margin:10px 0 0;color:var(--ink-2);font-size:clamp(13px,2.2vw,calc(15px * var(--site-type)));max-width:46ch}
+.hero .meta-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:calc(16px * var(--site-space))}
+.degrees{
+  display:flex;gap:6px;background:var(--glass-soft);border:1px solid var(--glass-edge);border-radius:999px;padding:4px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--inset-hi);
+}
+.degrees button{padding:6px 13px;border-radius:999px;font-size:13px;font-weight:600;color:var(--ink-3);transition:all var(--dur) var(--spring)}
+.degrees button:hover{color:var(--deep)}
+.degrees button:active{transform:scale(.9)}
+.degrees button.active{background:linear-gradient(150deg,var(--light),var(--green));color:var(--site-on-accent);box-shadow:0 3px 10px -4px color-mix(in srgb, var(--site-accent) 70%, transparent)}
+.chip{
+  display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;
+  padding:5px 11px;border-radius:999px;
+  background:color-mix(in srgb, var(--paler) 72%, transparent);color:var(--deep);
+  border:1px solid var(--glass-edge);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.chip.gold{background:rgba(251,245,233,.8);color:#8f6f2d;border-color:rgba(239,225,196,.9)}
+.chip.blue{background:rgba(234,241,246,.8);color:var(--blue);border-color:rgba(214,228,238,.9)}
+.chip.gray{background:rgba(241,244,242,.75);color:var(--ink-3);border-color:var(--line-2)}
+
+/* ---------------- 网格 ---------------- */
+.grid{display:grid;gap:calc(16px * var(--site-space))}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2-1{grid-template-columns:1.35fr 1fr}
+.g1-2{grid-template-columns:.85fr 1.15fr}
+
+/* ---------------- 进度条 / 能力画像 ---------------- */
+.bars{display:flex;flex-direction:column;gap:11px}
+.bar-row{display:grid;grid-template-columns:104px 1fr 54px;gap:11px;align-items:center;font-size:13px}
+.bar-row .nm{font-weight:600;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{height:11px;border-radius:999px;background:color-mix(in srgb, var(--paler) 70%, transparent);overflow:hidden;box-shadow:inset 0 1px 3px rgba(31,58,46,.08)}
+.bar-track i{
+  display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--light),var(--green));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
+  transition:width calc(700ms * var(--site-motion)) var(--spring-soft);
+}
+.bar-row .val{text-align:right;color:var(--ink-3);font-variant-numeric:tabular-nums;font-size:12px}
+.bar-row.sample .bar-track i{background:linear-gradient(90deg,#e0d3ae,var(--gold))}
+.bar-row.sample .nm{color:var(--ink-3)}
+
+/* ---------------- 星图 ---------------- */
+.starmap{
+  position:relative;min-height:452px;border-radius:var(--radius-s);
+  background:radial-gradient(circle at 50% 52%, rgba(244,251,247,.75) 0%, rgba(238,247,241,.5) 55%, rgba(230,242,235,.4) 100%);
+  border:1px solid var(--glass-edge);overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
+}
+.starmap .ring{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);border:1px dashed color-mix(in srgb, var(--lighter) 85%, transparent);border-radius:50%;animation:ringIn calc(800ms * var(--site-motion)) var(--ease-out) backwards}
+@keyframes ringIn{from{opacity:0;transform:translate(-50%,-50%) scale(.86)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.starmap .ring-label{position:absolute;left:50%;transform:translateX(-50%);font-size:10px;color:var(--light);letter-spacing:.14em;font-weight:700}
+.star-node{
+  position:absolute;transform:translate(-50%,-50%);text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  animation:nodeIn calc(650ms * var(--site-motion)) var(--spring-soft) backwards;
+  animation-delay:var(--nd,0ms);
+}
+@keyframes nodeIn{from{opacity:0;transform:translate(-50%,-50%) scale(.3)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.star-node .orb{
+  border-radius:999px;
+  background:linear-gradient(160deg, rgba(255,255,255,.95), rgba(255,255,255,.72));
+  border:1.5px solid var(--mid);color:var(--deep);
+  display:flex;align-items:center;justify-content:center;font-weight:700;
+  box-shadow:var(--shadow), var(--inset-hi);
+  line-height:1.15;padding:2px;text-align:center;
+  animation:bob calc(5.5s * var(--site-motion)) ease-in-out infinite alternate;
+  animation-delay:var(--fd,0s);
+  transition:transform var(--dur) var(--spring), border-color var(--dur), box-shadow var(--dur);
+}
+@keyframes bob{from{translate:0 -3px}to{translate:0 4px}}
+.star-node:hover .orb{transform:scale(1.14);border-color:var(--deep);box-shadow:var(--shadow-lift);animation-play-state:paused}
+.star-node:active .orb{transform:scale(.95)}
+.star-node.p-high .orb{background:linear-gradient(160deg,var(--light),var(--green) 70%);color:var(--site-on-accent);border-color:var(--deep)}
+.star-node.p-mid .orb{background:linear-gradient(160deg, rgba(255,255,255,.9), var(--lighter));color:var(--deep)}
+.star-node.p-low .orb{background:rgba(255,255,255,.6);color:var(--ink-3);border-color:var(--pale);border-style:dashed}
+.star-node .lbl{font-size:11px;font-weight:600;color:var(--ink-2);max-width:104px;line-height:1.3}
+.starmap .core{
+  position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);
+  width:104px;height:104px;border-radius:50%;
+  background:linear-gradient(160deg, rgba(255,255,255,.96), rgba(255,255,255,.78));
+  border:2px solid var(--green);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  box-shadow:var(--shadow-lift), 0 0 0 8px color-mix(in srgb, var(--site-accent) 8%, transparent), var(--inset-hi);
+  z-index:3;animation:corePulse calc(4.5s * var(--site-motion)) ease-in-out infinite;
+}
+@keyframes corePulse{50%{box-shadow:var(--shadow-lift), 0 0 0 14px color-mix(in srgb, var(--site-accent) 5%, transparent), var(--inset-hi)}}
+.starmap .core b{font-size:13px;color:var(--deep)}
+.starmap .core small{font-size:10px;color:var(--ink-3)}
+
+/* ---------------- 列表 ---------------- */
+.list{display:flex;flex-direction:column;gap:10px}
+.item{
+  display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:var(--radius-s);
+  background:rgba(255,255,255,.5);border:1px solid var(--glass-edge);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
+  transition:background var(--dur), transform var(--dur) var(--spring), border-color var(--dur);
+}
+.item:hover{background:rgba(255,255,255,.82);border-color:var(--lighter);transform:translateX(3px)}
+.item .when{flex:0 0 54px;text-align:center;font-variant-numeric:tabular-nums}
+.item .when b{display:block;font-size:17px;color:var(--deep);line-height:1.1}
+.item .when small{font-size:10px;color:var(--ink-3);letter-spacing:.04em}
+.item .body{flex:1;min-width:0}
+.item .body .t{font-weight:600;font-size:14px;line-height:1.4}
+.item .body .d{font-size:12.5px;color:var(--ink-3);margin-top:3px}
+.item .right{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.empty{
+  text-align:center;padding:34px 20px;color:var(--ink-3);font-size:13.5px;
+  background:rgba(255,255,255,.4);border:1px dashed var(--lighter);border-radius:var(--radius-s);
+}
+.empty .big{font-size:26px;display:block;margin-bottom:8px;opacity:.5;animation:bob calc(4s * var(--site-motion)) ease-in-out infinite alternate}
+
+/* ---------------- 日历 ---------------- */
+.cal-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.cal-head .title{font-weight:700;font-size:15px;min-width:128px}
+.cal-nav{
+  width:30px;height:30px;border-radius:calc(var(--site-radius) * .45);border:1px solid var(--glass-edge);
+  background:var(--glass-soft);
+  display:flex;align-items:center;justify-content:center;color:var(--ink-2);font-size:14px;
+  transition:all var(--dur) var(--spring);box-shadow:var(--inset-hi);
+}
+.cal-nav:hover{background:rgba(255,255,255,.9);color:var(--deep);transform:translateY(-1px)}
+.cal-nav:active{transform:scale(.88)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal-wd{text-align:center;font-size:11px;color:var(--ink-3);font-weight:600;padding:4px 0}
+.cal-day{
+  min-height:74px;border-radius:calc(var(--site-radius) * .5);border:1px solid var(--glass-edge);
+  background:rgba(255,255,255,.44);
+  padding:5px;display:flex;flex-direction:column;gap:3px;text-align:left;overflow:hidden;
+  transition:background var(--dur), transform var(--dur) var(--spring), border-color var(--dur), box-shadow var(--dur);
+}
+.cal-day:hover{background:rgba(255,255,255,.85);border-color:var(--lighter);transform:scale(1.04);box-shadow:0 6px 16px -8px rgba(31,58,46,.3);z-index:1}
+.cal-day:active{transform:scale(.96)}
+.cal-day.outside{opacity:.34}
+.cal-day.today{border-color:var(--green);background:rgba(238,248,242,.85);box-shadow:inset 0 0 0 1px var(--green), 0 0 14px -4px color-mix(in srgb, var(--site-accent) 45%, transparent)}
+.cal-day.selected{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue)}
+.cal-day .dnum{font-size:12px;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.cal-day.today .dnum{color:var(--deep)}
+.cal-ev{
+  font-size:10px;line-height:1.3;padding:2px 5px;border-radius:5px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;font-weight:600;
+  background:var(--lighter);color:var(--deep);
+}
+.cal-ev.exam{background:#e6eff5;color:var(--blue)}
+.cal-ev.deadline{background:#fbeade;color:#a15a3f}
+.cal-ev.comp{background:#e8f4ec;color:var(--deep)}
+.cal-ev.mine{background:linear-gradient(150deg,var(--gold-2),var(--gold));color:#fff}
+.cal-more{font-size:10px;color:var(--ink-3);font-weight:600;padding-left:3px}
+.cal-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-3);margin-top:11px}
+.cal-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* ---------------- 表格 ---------------- */
+.tbl-scroll{overflow-x:auto;border-radius:var(--radius-s);border:1px solid var(--glass-edge);-webkit-overflow-scrolling:touch;background:rgba(255,255,255,.35)}
+table.tbl{width:100%;border-collapse:collapse;font-size:13px;background:transparent;min-width:720px}
+table.tbl th{
+  text-align:left;padding:11px 13px;
+  background:color-mix(in srgb, var(--paler) 82%, transparent);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  color:var(--ink-2);font-weight:700;font-size:12px;letter-spacing:.03em;white-space:nowrap;
+  border-bottom:1px solid var(--line);position:sticky;top:0;
+}
+table.tbl td{padding:11px 13px;border-bottom:1px solid var(--line-2);vertical-align:top}
+table.tbl tr:last-child td{border-bottom:0}
+table.tbl tbody tr{transition:background var(--dur)}
+table.tbl tbody tr:hover{background:rgba(255,255,255,.6)}
+table.tbl td.wrap-cell{min-width:190px}
+table.tbl .row-sel{width:36px;text-align:center}
+tr.is-sample td{background:rgba(253,250,242,.6)}
+tr.is-sample:hover td{background:rgba(253,250,242,.85)}
+.t-tag{
+  display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;
+  background:color-mix(in srgb, var(--paler) 80%, transparent);color:var(--deep);white-space:nowrap;
+  border:1px solid color-mix(in srgb, var(--lighter) 60%, transparent);
+}
+.t-tag.high{background:#fbeade;color:#a15a3f;border-color:#f3d9c4}
+.t-tag.mid{background:#fbf5e9;color:#8f6f2d;border-color:#efe1c4}
+.t-tag.low{background:#f1f4f2;color:var(--ink-3);border-color:var(--line-2)}
+.t-tag.sample{background:#f6efdc;color:#8f6f2d;border-color:#eadfc2}
+.t-tag.on{background:#e4f3e9;color:var(--deep);border-color:#cde8d7}
+.ck{width:16px;height:16px;accent-color:var(--green);cursor:pointer;transition:transform var(--dur) var(--spring)}
+.ck:active{transform:scale(1.3)}
+.filters{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:13px}
+.filters select,.filters input[type=search]{
+  padding:8px 11px;border-radius:calc(var(--site-radius) * .5);border:1px solid var(--glass-edge);
+  background:rgba(255,255,255,.66);font-size:13px;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  transition:border-color var(--dur), box-shadow var(--dur), background var(--dur);
+}
+.filters input[type=search]{min-width:190px;flex:1;max-width:320px}
+.filters select:focus,.filters input:focus{outline:none;border-color:var(--light);background:rgba(255,255,255,.92);box-shadow:0 0 0 3px color-mix(in srgb, var(--site-accent) 16%, transparent)}
+.count-note{font-size:12.5px;color:var(--ink-3);margin-left:auto;white-space:nowrap}
+
+/* ---------------- 时间线 ---------------- */
+.year-block{margin-bottom:calc(26px * var(--site-space))}
+.year-head{display:flex;align-items:center;gap:12px;margin-bottom:13px}
+.year-head .y{font-family:var(--serif);font-size:calc(30px * var(--site-type));color:var(--deep);line-height:1;font-variant-numeric:tabular-nums}
+.year-head .line{flex:1;height:1px;background:linear-gradient(90deg, var(--line), transparent)}
+.year-head .n{font-size:12px;color:var(--ink-3);font-weight:600}
+.tl{position:relative;padding-left:26px}
+.tl::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg, var(--lighter), var(--pale), var(--lighter));border-radius:2px}
+.tl-item{position:relative;margin-bottom:12px}
+.tl-item::before{
+  content:"";position:absolute;left:-23px;top:17px;width:10px;height:10px;border-radius:50%;
+  background:var(--white);border:2px solid var(--mid);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--site-accent) 12%, transparent);
+  transition:transform var(--dur) var(--spring);
+}
+.tl-item:hover::before{transform:scale(1.35)}
+.tl-item.sample::before{border-color:var(--gold);box-shadow:0 0 0 3px rgba(195,154,73,.15)}
+.exp-card{
+  position:relative;overflow:hidden;
+  background:linear-gradient(150deg, rgba(255,255,255,.8), rgba(255,255,255,.55));
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid var(--glass-edge);border-radius:var(--radius-s);
+  padding:14px 16px;box-shadow:var(--shadow), var(--inset-hi);
+  transition:box-shadow var(--dur-2) var(--ease-out), transform var(--dur-2) var(--spring-soft);
+}
+.exp-card:hover{box-shadow:var(--shadow-lift), var(--inset-hi);transform:translateY(-3px)}
+.exp-card.sample{background:linear-gradient(150deg, rgba(255,253,247,.85), rgba(255,251,238,.6));border-color:rgba(240,228,200,.9)}
+.exp-card .head{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.exp-card .head .t{font-weight:700;font-size:15px;flex:1;min-width:180px}
+.exp-card .meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:7px;font-size:12px;color:var(--ink-3)}
+.exp-card .duty{margin-top:9px;font-size:13px;color:var(--ink-2);white-space:pre-wrap}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+.tag{
+  font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;
+  background:color-mix(in srgb, var(--paler) 78%, transparent);color:var(--deep);
+  border:1px solid color-mix(in srgb, var(--lighter) 60%, transparent);
+  transition:transform var(--dur) var(--spring), background var(--dur);
+}
+.tag:hover{transform:translateY(-2px) scale(1.06);background:var(--lighter)}
+
+/* ---------------- 方向卡片墙 ---------------- */
+.dir-wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:calc(14px * var(--site-space))}
+.dir-card{
+  position:relative;overflow:hidden;
+  background:linear-gradient(155deg, rgba(255,255,255,.82) 0%, rgba(255,255,255,.55) 60%, rgba(255,255,255,.42) 100%);
+  backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);
+  border:1px solid var(--glass-edge);border-radius:var(--radius);
+  padding:calc(18px * var(--site-space));
+  box-shadow:var(--shadow), var(--inset-hi);
+  display:flex;flex-direction:column;gap:10px;
+  transition:box-shadow var(--dur-2) var(--ease-out), transform var(--dur-2) var(--spring-soft);
+}
+.dir-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--pale);z-index:1}
+.dir-card.i-high::before{background:linear-gradient(180deg,var(--light),var(--green))}
+.dir-card.i-mid::before{background:linear-gradient(180deg,var(--gold-2),var(--gold))}
+.dir-card.i-low::before{background:var(--pale)}
+.dir-card:hover{box-shadow:var(--shadow-lift), var(--inset-hi);transform:translateY(-5px) scale(1.012)}
+.dir-card h3{font-size:calc(16px * var(--site-type))}
+.dir-card .intro{font-size:12.5px;color:var(--ink-2);min-height:34px}
+.dir-card dl{margin:0;display:flex;flex-direction:column;gap:7px}
+.dir-card dl div{display:flex;gap:7px;font-size:12.5px;line-height:1.5}
+.dir-card dt{flex:0 0 56px;color:var(--ink-3);font-weight:600}
+.dir-card dd{margin:0;flex:1;color:var(--ink-2)}
+.dir-card .foot{margin-top:auto;display:flex;gap:8px;align-items:center;padding-top:10px;border-top:1px dashed var(--line)}
+
+/* ---------------- 体验卡 ---------------- */
+.xp-card{
+  position:relative;overflow:hidden;
+  background:linear-gradient(155deg, rgba(255,255,255,.82) 0%, rgba(255,255,255,.55) 60%, rgba(255,255,255,.42) 100%);
+  backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);
+  border:1px solid var(--glass-edge);border-radius:var(--radius);
+  padding:calc(18px * var(--site-space));
+  box-shadow:var(--shadow), var(--inset-hi);
+  display:flex;flex-direction:column;gap:11px;
+  transition:box-shadow var(--dur-2) var(--ease-out), transform var(--dur-2) var(--spring-soft);
+}
+.xp-card:hover{box-shadow:var(--shadow-lift), var(--inset-hi);transform:translateY(-3px)}
+.xp-card.st-done{background:linear-gradient(155deg, rgba(247,252,249,.88), rgba(236,248,241,.6));border-color:var(--lighter)}
+.xp-card .head{display:flex;gap:9px;align-items:flex-start;flex-wrap:wrap}
+.xp-card .head .t{font-weight:700;font-size:14.5px;flex:1;min-width:150px}
+.steps{display:flex;flex-direction:column;gap:6px;margin:2px 0 0}
+.step{display:flex;gap:9px;align-items:flex-start;font-size:13px;cursor:pointer;padding:5px 7px;border-radius:calc(var(--site-radius) * .45);transition:background var(--dur), transform var(--dur) var(--spring)}
+.step:hover{background:color-mix(in srgb, var(--paler) 70%, transparent)}
+.step:active{transform:scale(.98)}
+.step input{width:16px;height:16px;margin-top:2px;accent-color:var(--green);flex:0 0 16px;cursor:pointer}
+.step.done span{text-decoration:line-through;color:var(--ink-3)}
+.step.pop{animation:stepPop calc(420ms * var(--site-motion)) var(--spring)}
+.xp-card.pop{animation:stepPop calc(500ms * var(--site-motion)) var(--spring)}
+@keyframes stepPop{0%{transform:scale(1)}35%{transform:scale(1.045)}70%{transform:scale(.985)}100%{transform:scale(1)}}
+.prog{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--ink-3)}
+.prog .track{flex:1;height:7px;border-radius:999px;background:color-mix(in srgb, var(--paler) 70%, transparent);overflow:hidden;box-shadow:inset 0 1px 2px rgba(31,58,46,.08)}
+.prog .track i{display:block;height:100%;background:linear-gradient(90deg,var(--light),var(--green));box-shadow:inset 0 1px 0 rgba(255,255,255,.5);transition:width calc(600ms * var(--site-motion)) var(--spring-soft)}
+.fb{
+  font-size:12.5px;color:var(--ink-2);background:rgba(255,255,255,.5);border-left:3px solid var(--pale);
+  padding:9px 12px;border-radius:0 calc(var(--site-radius) * .45) calc(var(--site-radius) * .45) 0;white-space:pre-wrap;
+}
+.xp-card .foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:auto}
+
+/* ---------------- 表单 / 弹层 ---------------- */
+.overlay{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(24,44,34,.38);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;padding:18px;
+  animation:scrimIn calc(240ms * var(--site-motion)) var(--ease-out);
+}
+@keyframes scrimIn{from{opacity:0}to{opacity:1}}
+.overlay.hidden{display:none}
+.modal{
+  position:relative;
+  background:linear-gradient(165deg, rgba(255,255,255,.94) 0%, rgba(250,253,251,.88) 100%);
+  backdrop-filter:blur(28px) saturate(1.5);-webkit-backdrop-filter:blur(28px) saturate(1.5);
+  border:1px solid var(--glass-edge);
+  border-radius:var(--radius);width:min(620px,100%);
+  max-height:88vh;overflow:auto;
+  box-shadow:0 30px 80px -24px rgba(20,40,30,.55), var(--inset-hi);
+  animation:modalPop calc(430ms * var(--site-motion)) var(--spring-soft);
+}
+@keyframes modalPop{0%{opacity:0;transform:translateY(26px) scale(.92)}60%{opacity:1;transform:translateY(-4px) scale(1.015)}100%{opacity:1;transform:none}}
+.modal-head{
+  display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line-2);
+  position:sticky;top:0;background:rgba(252,254,253,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:2;
+}
+.modal-head h3{font-size:calc(16px * var(--site-type));flex:1}
+.modal-body{padding:calc(20px * var(--site-space)) 22px}
+.modal-foot{
+  display:flex;gap:9px;justify-content:flex-end;padding:16px 22px;border-top:1px solid var(--line-2);
+  position:sticky;bottom:0;background:rgba(252,254,253,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.field{margin-bottom:calc(14px * var(--site-space))}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
+.field label .type{font-weight:500;color:var(--ink-3);font-size:11px;margin-left:5px}
+.field input,.field select,.field textarea{
+  width:100%;padding:9px 11px;border-radius:calc(var(--site-radius) * .5);border:1px solid var(--line);
+  background:rgba(255,255,255,.75);font-size:13.5px;
+  transition:border-color var(--dur), box-shadow var(--dur), background var(--dur);
+}
+.field textarea{min-height:84px;resize:vertical;line-height:1.55}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--light);background:#fff;box-shadow:0 0 0 3px color-mix(in srgb, var(--site-accent) 16%, transparent)}
+.field .hint{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.multi{display:flex;flex-wrap:wrap;gap:6px}
+.multi label{
+  display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;
+  padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.6);cursor:pointer;
+  transition:all var(--dur) var(--spring);
+}
+.multi label:hover{background:var(--paler);transform:translateY(-1px)}
+.multi label:active{transform:scale(.93)}
+.multi input{width:14px;height:14px;accent-color:var(--green)}
+.multi label.on{background:var(--lighter);border-color:var(--pale);color:var(--deep);font-weight:600;box-shadow:0 2px 8px -4px color-mix(in srgb, var(--site-accent) 50%, transparent)}
+
+/* ---------------- 数据管理弹层 ---------------- */
+.data-stats{margin-bottom:16px}
+.data-actions{display:flex;flex-direction:column;gap:10px}
+.data-action{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--radius-s);
+  background:rgba(255,255,255,.55);border:1px solid var(--glass-edge);
+  transition:background var(--dur), transform var(--dur) var(--spring);
+}
+.data-action:hover{background:rgba(255,255,255,.85)}
+.data-action .da-body{flex:1;min-width:0}
+.data-action .da-t{font-weight:600;font-size:13.5px}
+.data-action .da-d{font-size:12px;color:var(--ink-3);margin-top:2px}
+.data-note{margin-top:14px}
+
+/* ---------------- 提示条 ---------------- */
+.toast-wrap{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{
+  background:color-mix(in srgb, var(--site-fg) 88%, transparent);color:#fff;font-size:13px;padding:10px 18px;border-radius:999px;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:var(--shadow-lift), inset 0 1px 0 rgba(255,255,255,.2);
+  display:flex;align-items:center;gap:10px;pointer-events:auto;
+  animation:toastIn calc(480ms * var(--site-motion)) var(--spring);
+}
+@keyframes toastIn{0%{opacity:0;transform:translateY(24px) scale(.8)}60%{opacity:1;transform:translateY(-4px) scale(1.04)}100%{opacity:1;transform:none}}
+.toast .undo{color:var(--pale);font-weight:700;text-decoration:underline;border:0;background:none;cursor:pointer}
+.toast.warn{background:rgba(143,111,45,.92)}
+.toast.err{background:rgba(168,69,47,.92)}
+
+/* ---------------- 统计小卡 ---------------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:11px}
+.stat{
+  background:rgba(255,255,255,.5);border:1px solid var(--glass-edge);border-radius:var(--radius-s);
+  padding:13px 14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
+  transition:transform var(--dur) var(--spring), background var(--dur);
+}
+.stat:hover{transform:translateY(-3px);background:rgba(255,255,255,.8)}
+.stat b{display:block;font-size:calc(24px * var(--site-type));color:var(--deep);line-height:1.15;font-variant-numeric:tabular-nums}
+.stat small{font-size:11.5px;color:var(--ink-3);font-weight:600}
+.stat.gold b{color:var(--gold)}
+.stat.blue b{color:var(--blue)}
+
+.divider{height:1px;background:var(--line-2);margin:calc(24px * var(--site-space)) 0}
+.note{
+  font-size:12px;color:var(--ink-3);
+  background:color-mix(in srgb, var(--paler) 65%, transparent);border-left:3px solid var(--pale);
+  padding:9px 13px;border-radius:0 calc(var(--site-radius) * .45) calc(var(--site-radius) * .45) 0;line-height:1.6;
+}
+.legend-inline{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-3);margin-top:9px}
+.legend-inline b{color:var(--ink-2);font-variant-numeric:tabular-nums}
+
+.illus-band{width:100%;height:96px;object-fit:cover;opacity:.9;border-radius:var(--radius-s);margin-top:6px}
+.foot-note{
+  position:relative;z-index:1;text-align:center;font-size:12px;color:var(--ink-3);
+  padding:26px 20px 34px;letter-spacing:.02em;
+}
+.foot-note b{color:var(--ink-2)}
+
+/* ---------------- 响应式 ---------------- */
+@media (max-width:1000px){
+  .g2-1,.g1-2{grid-template-columns:1fr}
+  .g3{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:720px){
+  :root{--blur:10px}
+  body::before{opacity:.2}
+  .aurora i{filter:blur(44px)}
+  .aurora .a4,.aurora .a5{display:none}
+  .wrap{padding:0 13px calc(44px * var(--site-space))}
+  .top-inner{padding:9px 13px;gap:10px}
+  .brand small{display:none}
+  nav.tabs{margin-left:0;order:3;width:100%}
+  nav.tabs button{flex:1;justify-content:center;padding:8px 9px;font-size:13px}
+  nav.tabs button .num{display:none}
+  .sync-pill{order:2;margin-left:auto}
+  .hdr-data{order:2}
+  .g2,.g3{grid-template-columns:1fr}
+  .card{padding:calc(16px * var(--site-space));border-radius:calc(var(--site-radius) * .78)}
+  .hero-inner{padding:calc(22px * var(--site-space)) 17px calc(20px * var(--site-space))}
+  .sec-head{margin:calc(24px * var(--site-space)) 0 calc(11px * var(--site-space))}
+  .sec-head h2{font-size:calc(18px * var(--site-type))}
+  .field-row{grid-template-columns:1fr}
+  .bar-row{grid-template-columns:82px 1fr 46px;font-size:12px}
+  .cal-day{min-height:58px;padding:3px}
+  .cal-ev{font-size:9px;padding:1px 3px}
+  .cal-day .dnum{font-size:11px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .dir-wall{grid-template-columns:1fr}
+  .starmap{min-height:420px}
+  .exp-card,.dir-card,.xp-card{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+}
+@media (max-width:420px){
+  .cal-ev{display:none}
+  .cal-day{min-height:42px;align-items:center;justify-content:center}
+  .cal-day .dnum{font-size:12px}
+  .cal-day.has-ev{border-color:var(--pale);background:rgba(242,250,245,.8)}
+  .cal-day.has-ev .dnum::after{content:"•";color:var(--green);margin-left:2px}
+}
+@media (pointer:coarse){
+  .glowable::after{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .pre{opacity:1;transform:none}
+  html{scroll-behavior:auto}
+}
+@media print{
+  header.top,nav.tabs,.sync-pill,.btn,.toast-wrap,.aurora,.hdr-data,.foot-note{display:none!important}
+  body::before,body::after{display:none!important}
+  .view{display:block!important}
+  .card,.dir-card,.xp-card,.exp-card{break-inside:avoid;background:#fff;backdrop-filter:none;box-shadow:none}
+}</style>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i><i class="a4"></i><i class="a5"></i></div>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
+        <circle cx="20" cy="20" r="19" fill="#e6f2eb" stroke="#3f7d5a" stroke-width="1.6"/>
+        <path d="M20 31c0-7 0-11 0-13" stroke="#3f7d5a" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+        <path d="M20 20c-5.4 0-8.4-2.6-8.4-7 4.8-.8 8.4 1.6 8.4 7z" fill="#6aa37f"/>
+        <path d="M20 17c4.6-.6 7.4-3.4 7-7.6-4.4.2-7.4 3-7 7.6z" fill="#a8cdb8"/>
+        <circle cx="20" cy="12" r="2.1" fill="#c39a49"/>
+      </svg>
+      <span>大学成长地图<small>COLLEGE GROWTH ATLAS</small></span>
+    </div>
+    <span class="sync-pill" id="syncPill" title="数据存储状态"><i class="dot"></i><span id="syncText">连接中…</span></span>
+    <button class="hdr-data" id="dataBtn" type="button" title="数据与备份">⛁ 数据</button>
+    <nav class="tabs" id="tabs">
+      <span class="tab-glider" id="tabGlider" aria-hidden="true"></span>
+      <button data-view="overview" class="active"><span class="num">00</span>总览</button>
+      <button data-view="past"><span class="num">01</span>过去</button>
+      <button data-view="now"><span class="num">02</span>现在</button>
+      <button data-view="future"><span class="num">03</span>未来</button>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============================ 总览 ============================ -->
+  <section class="view active" id="view-overview">
+    <div class="hero">
+      <img class="hero-bg" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAwIDQyMCI+CiAgPHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iNDIwIiBmaWxsPSIjZjdmYWY4Ii8+CgogIDwhLS0gc3VuIC0tPgogIDxjaXJjbGUgY3g9IjEwNDAiIGN5PSI4OCIgcj0iNDgiIGZpbGw9IiNjMzlhNDkiIG9wYWNpdHk9Ii4xNiIvPgogIDxjaXJjbGUgY3g9IjEwNDAiIGN5PSI4OCIgcj0iMzAiIGZpbGw9IiNjMzlhNDkiIG9wYWNpdHk9Ii4zNCIvPgoKICA8IS0tIGNsb3VkcyAtLT4KICA8ZyBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiNjZmU2ZDkiIHN0cm9rZS13aWR0aD0iMyI+CiAgICA8ZWxsaXBzZSBjeD0iMTY4IiBjeT0iOTIiIHJ4PSI0MiIgcnk9IjIzIi8+CiAgICA8ZWxsaXBzZSBjeD0iMjA2IiBjeT0iNzkiIHJ4PSIyOSIgcnk9IjIzIi8+CiAgICA8ZWxsaXBzZSBjeD0iMTMyIiBjeT0iODMiIHJ4PSIyNSIgcnk9IjE3Ii8+CiAgPC9nPgogIDxnIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2NmZTZkOSIgc3Ryb2tlLXdpZHRoPSIzIj4KICAgIDxlbGxpcHNlIGN4PSI1MjAiIGN5PSI2MiIgcng9IjM0IiByeT0iMTkiLz4KICAgIDxlbGxpcHNlIGN4PSI1NDgiIGN5PSI1MSIgcng9IjIyIiByeT0iMTciLz4KICAgIDxlbGxpcHNlIGN4PSI0OTQiIGN5PSI1MyIgcng9IjE5IiByeT0iMTMiLz4KICA8L2c+CiAgPGcgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjY2ZlNmQ5IiBzdHJva2Utd2lkdGg9IjMiPgogICAgPGVsbGlwc2UgY3g9Ijg2NiIgY3k9IjEyOCIgcng9IjMwIiByeT0iMTYiLz4KICAgIDxlbGxpcHNlIGN4PSI4OTAiIGN5PSIxMTkiIHJ4PSIxOSIgcnk9IjE0Ii8+CiAgPC9nPgoKICA8IS0tIGJpcmRzIC0tPgogIDxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzNmN2Q1YSIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogICAgPHBhdGggZD0iTTcwMCA4NiBxOSAtOSAxOCAwIHE5IC05IDE4IDAiLz4KICAgIDxwYXRoIGQ9Ik03NTQgNjIgcTcgLTcgMTQgMCBxNyAtNyAxNCAwIi8+CiAgICA8cGF0aCBkPSJNNjcwIDExOCBxNiAtNiAxMiAwIHE2IC02IDEyIDAiLz4KICA8L2c+CgogIDwhLS0gbGF5ZXJlZCBoaWxscyAtLT4KICA8cGF0aCBkPSJNLTEwIDMwMCBDIDEyMCAyNjIgMjQwIDI4NiAzNjAgMjc0IEMgNTAwIDI2MCA2MjAgMjkyIDc2MCAyODAgQyA5MDAgMjY4IDEwNDAgMjk2IDEyMTAgMjcyIEwgMTIxMCA0MjAgTCAtMTAgNDIwIFoiIGZpbGw9IiNlNmYyZWIiLz4KICA8cGF0aCBkPSJNLTEwIDMzMiBDIDE0MCAzMDIgMjYwIDMzMiA0MDAgMzIyIEMgNTYwIDMxMCA3MDAgMzQwIDg2MCAzMjggQyAxMDAwIDMxOCAxMTIwIDM0NCAxMjEwIDMyNCBMIDEyMTAgNDIwIEwgLTEwIDQyMCBaIiBmaWxsPSIjY2ZlNmQ5Ii8+CgogIDwhLS0gYnVpbGRpbmc6IHBpdGNoZWQgcm9vZiBoYWxsIC0tPgogIDxyZWN0IHg9IjE1MCIgeT0iMjY4IiB3aWR0aD0iMTUwIiBoZWlnaHQ9Ijc0IiByeD0iNSIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjM2Y3ZDVhIiBzdHJva2Utd2lkdGg9IjMuNSIvPgogIDxwYXRoIGQ9Ik0xMzIgMjY4IEwyMjUgMjEyIEwzMTggMjY4IFoiIGZpbGw9IiNjMzlhNDkiIHN0cm9rZT0iI2MzOWE0OSIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CiAgPHJlY3QgeD0iMTcwIiB5PSIyODYiIHdpZHRoPSIyMiIgaGVpZ2h0PSIyMiIgcng9IjMiIGZpbGw9IiNjZmU2ZDkiLz4KICA8cmVjdCB4PSIyMDYiIHk9IjI4NiIgd2lkdGg9IjIyIiBoZWlnaHQ9IjIyIiByeD0iMyIgZmlsbD0iI2NmZTZkOSIvPgogIDxwYXRoIGQ9Ik0yNjIgMzQyIHYtMzAgYTEyIDEyIDAgMCAxIDI0IDAgdjMwIHoiIGZpbGw9IiMzZjdkNWEiLz4KCiAgPCEtLSBidWlsZGluZzogY2xvY2sgdG93ZXIgaGFsbCAtLT4KICA8cmVjdCB4PSI1MDYiIHk9IjE1OCIgd2lkdGg9IjcwIiBoZWlnaHQ9IjE4NCIgcng9IjUiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iIzNmN2Q1YSIgc3Ryb2tlLXdpZHRoPSIzLjUiLz4KICA8cGF0aCBkPSJNNDk0IDE1OCBMNTQxIDEyMiBMNTg4IDE1OCBaIiBmaWxsPSIjM2Y3ZDVhIiBzdHJva2U9IiMzZjdkNWEiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxyZWN0IHg9IjQzMCIgeT0iMjUyIiB3aWR0aD0iNzYiIGhlaWdodD0iOTAiIHJ4PSI1IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiMzZjdkNWEiIHN0cm9rZS13aWR0aD0iMy41Ii8+CiAgPHJlY3QgeD0iNTc2IiB5PSIyNjIiIHdpZHRoPSI4NCIgaGVpZ2h0PSI4MCIgcng9IjUiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iIzNmN2Q1YSIgc3Ryb2tlLXdpZHRoPSIzLjUiLz4KICA8cmVjdCB4PSI0NDYiIHk9IjI3MCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjIwIiByeD0iMyIgZmlsbD0iI2NmZTZkOSIvPgogIDxyZWN0IHg9IjQ3MiIgeT0iMjcwIiB3aWR0aD0iMTgiIGhlaWdodD0iMjAiIHJ4PSIzIiBmaWxsPSIjY2ZlNmQ5Ii8+CiAgPHJlY3QgeD0iNTkyIiB5PSIyODAiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgcng9IjMiIGZpbGw9IiNjZmU2ZDkiLz4KICA8cmVjdCB4PSI2MjIiIHk9IjI4MCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiByeD0iMyIgZmlsbD0iI2NmZTZkOSIvPgogIDxjaXJjbGUgY3g9IjU0MSIgY3k9IjIwMiIgcj0iMjYiIGZpbGw9IiNmN2ZhZjgiIHN0cm9rZT0iIzFmM2EyZSIgc3Ryb2tlLXdpZHRoPSIzLjUiLz4KICA8cGF0aCBkPSJNNTQxIDIwMiBMNTQxIDE4NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWYzYTJlIiBzdHJva2Utd2lkdGg9IjMuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTU0MSAyMDIgTDU1NCAyMDgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzFmM2EyZSIgc3Ryb2tlLXdpZHRoPSIzLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik01MjggMzQyIHYtMzQgYTEzIDEzIDAgMCAxIDI2IDAgdjM0IHoiIGZpbGw9IiMzZjdkNWEiLz4KCiAgPCEtLSBidWlsZGluZzogbG93IGJsb2NrIC0tPgogIDxyZWN0IHg9IjgwMCIgeT0iMjgyIiB3aWR0aD0iMTcwIiBoZWlnaHQ9IjYwIiByeD0iNSIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjM2Y3ZDVhIiBzdHJva2Utd2lkdGg9IjMuNSIvPgogIDxyZWN0IHg9IjgzNiIgeT0iMjQyIiB3aWR0aD0iNzIiIGhlaWdodD0iNDAiIHJ4PSI1IiBmaWxsPSIjZjdmYWY4IiBzdHJva2U9IiMzZjdkNWEiIHN0cm9rZS13aWR0aD0iMy41Ii8+CiAgPHJlY3QgeD0iODE2IiB5PSIyOTgiIHdpZHRoPSIyMiIgaGVpZ2h0PSIyMiIgcng9IjMiIGZpbGw9IiNjZmU2ZDkiLz4KICA8cmVjdCB4PSI4NDgiIHk9IjI5OCIgd2lkdGg9IjIyIiBoZWlnaHQ9IjIyIiByeD0iMyIgZmlsbD0iI2NmZTZkOSIvPgogIDxyZWN0IHg9Ijg4MCIgeT0iMjk4IiB3aWR0aD0iMjIiIGhlaWdodD0iMjIiIHJ4PSIzIiBmaWxsPSIjY2ZlNmQ5Ii8+CiAgPHJlY3QgeD0iOTEyIiB5PSIyOTgiIHdpZHRoPSIyMiIgaGVpZ2h0PSIyMiIgcng9IjMiIGZpbGw9IiNjZmU2ZDkiLz4KICA8cmVjdCB4PSI5NDQiIHk9IjI5OCIgd2lkdGg9IjIyIiBoZWlnaHQ9IjIyIiByeD0iMyIgZmlsbD0iI2NmZTZkOSIvPgogIDxyZWN0IHg9Ijg1MiIgeT0iMjU0IiB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHJ4PSIzIiBmaWxsPSIjY2ZlNmQ5Ii8+CiAgPHJlY3QgeD0iODc2IiB5PSIyNTQiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgcng9IjMiIGZpbGw9IiNjZmU2ZDkiLz4KCiAgPCEtLSB0cmVlcyBvbiB0aGUgaGlsbCAtLT4KICA8cGF0aCBkPSJNOTYgMzQwIEw5NiAzMDYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJmNmI0ZiIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8Y2lyY2xlIGN4PSI5NiIgY3k9IjI4NCIgcj0iMzAiIGZpbGw9IiNhOGNkYjgiLz4KICA8Y2lyY2xlIGN4PSIxMjIiIGN5PSIyOTgiIHI9IjIwIiBmaWxsPSIjY2ZlNmQ5Ii8+CiAgPGNpcmNsZSBjeD0iNzIiIGN5PSIyOTYiIHI9IjE3IiBmaWxsPSIjNmFhMzdmIi8+CgogIDxwYXRoIGQ9Ik0zNjAgMzQ0IEwzNjAgMzE4IiBmaWxsPSJub25lIiBzdHJva2U9IiMyZjZiNGYiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPGNpcmNsZSBjeD0iMzYwIiBjeT0iMzAyIiByPSIyMiIgZmlsbD0iI2E4Y2RiOCIvPgogIDxjaXJjbGUgY3g9IjM3OCIgY3k9IjMxMiIgcj0iMTQiIGZpbGw9IiNjZmU2ZDkiLz4KCiAgPHBhdGggZD0iTTcwMCAzNDQgTDcwMCAzMTYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJmNmI0ZiIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8Y2lyY2xlIGN4PSI3MDAiIGN5PSIyOTgiIHI9IjI0IiBmaWxsPSIjYThjZGI4Ii8+CiAgPGNpcmNsZSBjeD0iNzIyIiBjeT0iMzEwIiByPSIxNCIgZmlsbD0iIzZhYTM3ZiIvPgogIDxjaXJjbGUgY3g9IjY4MCIgY3k9IjMxMCIgcj0iMTMiIGZpbGw9IiNjZmU2ZDkiLz4KCiAgPHBhdGggZD0iTTEwMjQgMzQyIEwxMDI0IDMxMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMmY2YjRmIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxjaXJjbGUgY3g9IjEwMjQiIGN5PSIyOTIiIHI9IjI0IiBmaWxsPSIjYThjZGI4Ii8+CiAgPGNpcmNsZSBjeD0iMTA0NiIgY3k9IjMwNCIgcj0iMTUiIGZpbGw9IiNjZmU2ZDkiLz4KCiAgPHBhdGggZD0iTTExNjAgMzQ0IEwxMTYwIDMyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMmY2YjRmIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxjaXJjbGUgY3g9IjExNjAiIGN5PSIzMTAiIHI9IjE3IiBmaWxsPSIjY2ZlNmQ5Ii8+CiAgPGNpcmNsZSBjeD0iMTE3NCIgY3k9IjMxOCIgcj0iMTEiIGZpbGw9IiNhOGNkYjgiLz4KCiAgPCEtLSBmcm9udCBsYXduIC0tPgogIDxwYXRoIGQ9Ik0tMTAgMzcyIEMgMTgwIDM1MiA0MjAgMzgwIDY0MCAzNjggQyA4NjAgMzU2IDEwNTAgMzgyIDEyMTAgMzY2IEwgMTIxMCA0MjAgTCAtMTAgNDIwIFoiIGZpbGw9IiNlNmYyZWIiLz4KCiAgPCEtLSB3aW5kaW5nIHBhdGggLS0+CiAgPHBhdGggZD0iTTE1MCA0MjAgQyAyMTQgMzk2IDMwMCA0MDIgMzkyIDM3OCBDIDQ2OCAzNTggNDg2IDM0OCA1NDAgMzQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMzAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0xNTAgNDIwIEMgMjE0IDM5NiAzMDAgNDAyIDM5MiAzNzggQyA0NjggMzU4IDQ4NiAzNDggNTQwIDM0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2ZlNmQ5IiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1kYXNoYXJyYXk9IjE0IDE4IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KCiAgPCEtLSBmb3JlZ3JvdW5kIGdyZWVucyAtLT4KICA8cGF0aCBkPSJNNjUwIDQxMiBMNjUwIDM3MiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMmY2YjRmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxjaXJjbGUgY3g9IjY1MCIgY3k9IjM0OCIgcj0iMzIiIGZpbGw9IiNhOGNkYjgiLz4KICA8Y2lyY2xlIGN4PSI2ODAiIGN5PSIzNjYiIHI9IjIwIiBmaWxsPSIjY2ZlNmQ5Ii8+CiAgPGNpcmNsZSBjeD0iNjIwIiBjeT0iMzY0IiByPSIxOCIgZmlsbD0iIzZhYTM3ZiIvPgoKICA8cGF0aCBkPSJNMTEyMCA0MTYgTDExMjAgMzgyIiBmaWxsPSJub25lIiBzdHJva2U9IiMyZjZiNGYiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPGNpcmNsZSBjeD0iMTEyMCIgY3k9IjM2MCIgcj0iMjYiIGZpbGw9IiNjZmU2ZDkiLz4KICA8Y2lyY2xlIGN4PSIxMTQ2IiBjeT0iMzc0IiByPSIxNiIgZmlsbD0iI2E4Y2RiOCIvPgoKICA8ZWxsaXBzZSBjeD0iMjUwIiBjeT0iMzk4IiByeD0iMzAiIHJ5PSIxMyIgZmlsbD0iI2NmZTZkOSIvPgogIDxlbGxpcHNlIGN4PSIyOTIiIGN5PSI0MDQiIHJ4PSIyMCIgcnk9IjEwIiBmaWxsPSIjYThjZGI4Ii8+CiAgPGVsbGlwc2UgY3g9IjQ3MCIgY3k9IjQxMCIgcng9IjE4IiByeT0iOCIgZmlsbD0iI2E4Y2RiOCIvPgogIDxlbGxpcHNlIGN4PSI4ODAiIGN5PSI0MDQiIHJ4PSIyNiIgcnk9IjExIiBmaWxsPSIjY2ZlNmQ5Ii8+CiAgPGNpcmNsZSBjeD0iMzQwIiBjeT0iNDA2IiByPSI0IiBmaWxsPSIjZDk4MDZhIi8+CiAgPGNpcmNsZSBjeD0iMzU2IiBjeT0iNDEyIiByPSIzLjUiIGZpbGw9IiNjMzlhNDkiLz4KICA8Y2lyY2xlIGN4PSI5NjAiIGN5PSI0MTAiIHI9IjQiIGZpbGw9IiNkOTgwNmEiLz4KPC9zdmc+Cg==" alt="" aria-hidden="true">
+      <div class="hero-inner">
+        <h1 id="heroTitle">大学成长地图</h1>
+        <p class="tagline">把经历变成证据，把选择变成尝试。记录每一步探索，走向更远的自己。</p>
+        <div class="meta-row">
+          <div class="degrees" id="degreeSwitch" role="group" aria-label="学位阶段"></div>
+          <span class="chip" id="heroGrade">—</span>
+          <span class="chip gray" id="heroMajor">—</span>
+          <button class="btn sm" id="editProfileBtn">编辑我的档案</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-head">
+      <div><span class="eyebrow">Portrait</span><h2>能力画像</h2>
+        <p class="sec-sub">来自真实经历的沉淀。带「示例（请替换）」标记的记录默认不计入统计。</p></div>
+      <div class="ops">
+        <label class="chip" style="cursor:pointer" title="临时把示例记录也纳入统计，便于预览效果">
+          <input type="checkbox" id="includeSampleStats" style="accent-color:var(--green)"> 预览：含示例数据
+        </label>
+      </div>
+    </div>
+    <div class="card">
+      <div class="grid g2-1">
+        <div>
+          <div class="bars" id="capabilityBars"></div>
+        </div>
+        <div>
+          <div class="stats" id="overviewStats"></div>
+          <div class="legend-inline" id="sampleLegend"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-head">
+      <div><span class="eyebrow">Direction Map</span><h2>方向星图</h2>
+        <p class="sec-sub">按意向程度由内向外排布：越靠近中心，你越想做。</p></div>
+      <div class="ops"><button class="btn ghost sm" data-goto="future">查看方向详情 →</button></div>
+    </div>
+    <div class="card">
+      <div class="starmap" id="starMap"></div>
+    </div>
+
+    <div class="sec-head">
+      <div><span class="eyebrow">This Week</span><h2>本周聚焦</h2>
+        <p class="sec-sub">这一周，只需要往前一步。</p></div>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <h3 style="font-size:14px;margin-bottom:11px">进行中的体验卡</h3>
+        <div class="list" id="focusExperiments"></div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:14px;margin-bottom:11px">未来 7 天截止提醒</h3>
+        <div class="list" id="focusDeadlines"></div>
+      </div>
+    </div>
+
+    <div class="sec-head">
+      <div><span class="eyebrow">Calendar</span><h2>本月安排</h2>
+        <p class="sec-sub">公开日程、个人机会与截止节点，聚合在同一张日历上。</p></div>
+      <div class="ops"><button class="btn ghost sm" data-goto="now">全部机会 →</button></div>
+    </div>
+    <div class="card">
+      <div class="cal-head">
+        <button class="cal-nav" data-cal="-1" aria-label="上个月">‹</button>
+        <span class="title" id="ovCalTitle">—</span>
+        <button class="cal-nav" data-cal="1" aria-label="下个月">›</button>
+        <button class="btn ghost sm" data-cal="0">回到本月</button>
+        <span class="count-note" id="ovCalStats"></span>
+      </div>
+      <div class="cal-grid" id="ovCalGrid"></div>
+      <div class="cal-legend">
+        <span><i style="background:#e6eff5"></i>考试</span>
+        <span><i style="background:#e8f4ec"></i>竞赛 / 项目</span>
+        <span><i style="background:#fbeade"></i>报名截止</span>
+        <span><i style="background:#c39a49"></i>我的安排</span>
+      </div>
+    </div>
+    <img class="illus-band" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAwIDIwMCI+CiAgPCEtLSBkaXN0YW50IGJpcmRzIC0tPgogIDxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2E4Y2RiOCIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPgogICAgPHBhdGggZD0iTTMwMCA1NCBxOCAtOCAxNiAwIHE4IC04IDE2IDAiLz4KICAgIDxwYXRoIGQ9Ik0zNDggMzQgcTYgLTYgMTIgMCBxNiAtNiAxMiAwIi8+CiAgICA8cGF0aCBkPSJNODQwIDQ0IHE3IC03IDE0IDAgcTcgLTcgMTQgMCIvPgogIDwvZz4KCiAgPCEtLSBmYXIgaGlsbCBiYW5kIC0tPgogIDxwYXRoIGQ9Ik0tMTAgMTUyIEMgMTAwIDExMiAyMDAgMTM0IDMwMCAxMTggQyA0MjAgMTAwIDUyMCAxMzAgNjQwIDExMCBDIDc2MCA5MCA4ODAgMTI2IDEwMDAgMTAyIEMgMTA5MCA4NCAxMTYwIDk4IDEyMTAgOTAgTCAxMjEwIDIwMCBMIC0xMCAyMDAgWiIgZmlsbD0iI2U2ZjJlYiIvPgogIDxnIGZpbGw9IiNjZmU2ZDkiPgogICAgPHBhdGggZD0iTTE1MCAxMzAgTDE2NiA5NiBMMTgyIDEzMCBaIi8+CiAgICA8cGF0aCBkPSJNMTk2IDEyMiBMMjA4IDk0IEwyMjAgMTIyIFoiLz4KICAgIDxwYXRoIGQ9Ik00NzAgMTI2IEw0ODYgOTAgTDUwMiAxMjYgWiIvPgogICAgPHBhdGggZD0iTTc2MCAxMjIgTDc3NiA4OCBMNzkyIDEyMiBaIi8+CiAgICA8cGF0aCBkPSJNMTAwNiAxMTQgTDEwMjIgODAgTDEwMzggMTE0IFoiLz4KICA8L2c+CgogIDwhLS0gbWlkZGxlIGhpbGwgYmFuZCAtLT4KICA8cGF0aCBkPSJNLTEwIDE3MiBDIDEyMCAxNDggMjQwIDE3MCAzODAgMTU2IEMgNTQwIDE0MCA2NjAgMTY2IDgwMCAxNTAgQyA5NDAgMTM0IDEwODAgMTYwIDEyMTAgMTQ0IEwgMTIxMCAyMDAgTCAtMTAgMjAwIFoiIGZpbGw9IiNjZmU2ZDkiLz4KICA8ZyBmaWxsPSIjNTA4NTY1Ij4KICAgIDxwYXRoIGQ9Ik0xODAgMTYwIEwxOTggMTI0IEwyMTYgMTYwIFoiLz4KICAgIDxwYXRoIGQ9Ik0yMjggMTU0IEwyNDAgMTI4IEwyNTIgMTU0IFoiLz4KICAgIDxwYXRoIGQ9Ik01MjAgMTU4IEw1MzggMTIwIEw1NTYgMTU4IFoiLz4KICAgIDxwYXRoIGQ9Ik04ODAgMTU2IEw4OTggMTE4IEw5MTYgMTU2IFoiLz4KICAgIDxwYXRoIGQ9Ik05MjggMTUwIEw5NDAgMTI2IEw5NTIgMTUwIFoiLz4KICAgIDxwYXRoIGQ9Ik0xMTA0IDE1MiBMMTEyMiAxMTYgTDExNDAgMTUyIFoiLz4KICA8L2c+CiAgPGcgZmlsbD0iIzZhYTM3ZiI+CiAgICA8cGF0aCBkPSJNNDAwIDE2MiBMNDE0IDEzNCBMNDI4IDE2MiBaIi8+CiAgICA8cGF0aCBkPSJNNjYwIDE2MCBMNjc0IDEzMiBMNjg4IDE2MCBaIi8+CiAgICA8cGF0aCBkPSJNNzYwIDE1OCBMNzcyIDEzNCBMNzg0IDE1OCBaIi8+CiAgPC9nPgoKICA8IS0tIGZyb250IGJhbmQ6IGZsYXQgYm90dG9tIGVkZ2UgLS0+CiAgPHBhdGggZD0iTS0xMCAxOTAgQyAxNjAgMTc2IDMyMCAxOTAgNDgwIDE4MiBDIDY2MCAxNzIgODIwIDE4OCA5ODAgMTgwIEMgMTA4MCAxNzYgMTE2MCAxODQgMTIxMCAxODAgTCAxMjEwIDIwMCBMIC0xMCAyMDAgWiIgZmlsbD0iI2E4Y2RiOCIvPgogIDxnIGZpbGw9IiM2YWEzN2YiPgogICAgPGVsbGlwc2UgY3g9IjEyMCIgY3k9IjE5MiIgcng9IjIwIiByeT0iOSIvPgogICAgPGVsbGlwc2UgY3g9IjMzMCIgY3k9IjE5MCIgcng9IjE1IiByeT0iNyIvPgogICAgPGVsbGlwc2UgY3g9IjcwMCIgY3k9IjE4OCIgcng9IjE4IiByeT0iOCIvPgogICAgPGVsbGlwc2UgY3g9IjEwNjAiIGN5PSIxOTAiIHJ4PSIxNiIgcnk9IjciLz4KICA8L2c+CiAgPGcgZmlsbD0iIzUwODU2NSI+CiAgICA8ZWxsaXBzZSBjeD0iMTY4IiBjeT0iMTk2IiByeD0iMTMiIHJ5PSI2Ii8+CiAgICA8ZWxsaXBzZSBjeD0iNDcwIiBjeT0iMTk0IiByeD0iMTIiIHJ5PSI2Ii8+CiAgICA8ZWxsaXBzZSBjeD0iOTAwIiBjeT0iMTkyIiByeD0iMTQiIHJ5PSI2Ii8+CiAgPC9nPgo8L3N2Zz4K" alt="" aria-hidden="true">
+  </section>
+
+  <!-- ============================ 过去 ============================ -->
+  <section class="view" id="view-past">
+    <div class="sec-head">
+      <div><span class="eyebrow">Past</span><h2>经历时间线</h2>
+        <p class="sec-sub">这里只记录已经发生的事，能力画像会随着经历自动生长。</p></div>
+      <div class="ops">
+        <button class="btn" id="addExpBtn">＋ 新增经历</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="stats" id="pastStats"></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="filters">
+        <select id="expTypeFilter"><option value="">全部类型</option></select>
+        <select id="expStatusFilter"><option value="">全部状态</option></select>
+        <input type="search" id="expSearch" placeholder="搜索名称、角色、职责或能力标签…">
+        <span class="count-note" id="expCount"></span>
+      </div>
+      <div class="ops-row" style="margin-bottom:14px">
+        <label class="chip" style="cursor:pointer"><input type="checkbox" id="expSelectAll" style="accent-color:var(--green)"> 全选当前结果</label>
+        <span class="chip gray" id="expSelCount">已选 0 条</span>
+        <button class="btn ghost sm" id="expClearSel">清空选择</button>
+        <button class="btn danger sm" id="expBulkDelete" disabled>删除所选</button>
+        <button class="btn ghost sm" id="expUndo" disabled>↩ 撤销删除</button>
+        <span class="count-note">删除后可撤销恢复</span>
+      </div>
+      <div id="timeline"></div>
+    </div>
+
+    <div class="sec-head">
+      <div><span class="eyebrow">Evidence</span><h2>成长证据</h2>
+        <p class="sec-sub">整合后的经历清单。示例记录已标注，统计时自动剔除。</p></div>
+    </div>
+    <div class="card">
+      <div class="tbl-scroll">
+        <table class="tbl" id="evidenceTable">
+          <thead><tr>
+            <th>名称</th><th>类型</th><th>角色</th><th>状态</th><th>起止</th>
+            <th>能力标签</th><th>职责与成果</th><th>作品</th><th></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ 现在 ============================ -->
+  <section class="view" id="view-now">
+    <div class="sec-head">
+      <div><span class="eyebrow">Now</span><h2>机会库</h2>
+        <p class="sec-sub">把考试、比赛和报名节点，放进自己的大学节奏里。</p></div>
+      <div class="ops"><button class="btn" id="addOppBtn">＋ 添加机会</button></div>
+    </div>
+
+    <div class="card">
+      <div class="stats" id="nowStats"></div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="filters">
+        <select id="oppTypeFilter"><option value="">全部类型</option></select>
+        <select id="oppStatusFilter"><option value="">全部状态</option></select>
+        <select id="oppScopeFilter">
+          <option value="">全部来源</option>
+          <option value="official">只看公开日程</option>
+          <option value="mine">只看我的清单</option>
+          <option value="custom">只看自建机会</option>
+        </select>
+        <input type="search" id="oppSearch" placeholder="搜索名称、来源、活动信息…">
+        <span class="count-note" id="oppCount"></span>
+      </div>
+      <div class="ops-row" style="margin-bottom:14px">
+        <label class="chip" style="cursor:pointer"><input type="checkbox" id="oppSelectAll" style="accent-color:var(--green)"> 全选当前结果</label>
+        <span class="chip gray" id="oppSelCount">已选 0 条</span>
+        <button class="btn ghost sm" id="oppClearSel">清空选择</button>
+        <button class="btn sm" id="oppBulkPlan">批量加入我的清单</button>
+        <button class="btn ghost sm" id="oppBulkUnplan">批量移出</button>
+        <button class="btn sm" id="oppBulkStatus">批量改状态</button>
+        <button class="btn danger sm" id="oppBulkDelete">删除所选</button>
+      </div>
+      <div class="tbl-scroll">
+        <table class="tbl" id="oppTable">
+          <thead><tr>
+            <th class="row-sel"><input type="checkbox" class="ck" id="oppHeadCk"></th>
+            <th>名称</th><th>类型</th><th>重要</th><th>状态</th><th>来源</th>
+            <th>报名截止</th><th>活动日期</th><th>剩余</th><th>我的安排</th><th></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sec-head">
+      <div><span class="eyebrow">Countdown</span><h2>报名截止倒计时</h2>
+        <p class="sec-sub">按剩余天数排序，7 天内到期的排在最前。</p></div>
+    </div>
+    <div class="card"><div class="list" id="countdownList"></div></div>
+
+    <div class="sec-head">
+      <div><span class="eyebrow">Calendar</span><h2>月历视图</h2>
+        <p class="sec-sub">按日聚合事项；跨日的比赛按完整赛期显示。</p></div>
+      <div class="ops">
+        <label class="chip" style="cursor:pointer"><input type="checkbox" id="calMineOnly" style="accent-color:var(--green)"> 只看我的安排</label>
+        <button class="btn gold sm" id="icsBtn">⤓ 一键下载 ICS 加入手机日历</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="cal-head">
+        <button class="cal-nav" data-cal="-1" aria-label="上个月">‹</button>
+        <span class="title" id="nowCalTitle">—</span>
+        <button class="cal-nav" data-cal="1" aria-label="下个月">›</button>
+        <button class="btn ghost sm" data-cal="0">回到本月</button>
+        <span class="count-note" id="nowCalStats"></span>
+      </div>
+      <div class="cal-grid" id="nowCalGrid"></div>
+      <div class="cal-legend">
+        <span><i style="background:#e6eff5"></i>考试</span>
+        <span><i style="background:#e8f4ec"></i>竞赛 / 项目</span>
+        <span><i style="background:#fbeade"></i>报名截止</span>
+        <span><i style="background:#c39a49"></i>我的安排</span>
+      </div>
+      <div id="calDayDetail" style="margin-top:14px"></div>
+    </div>
+
+    <div class="sec-head">
+      <div><span class="eyebrow">Official Calendar</span><h2>考试竞赛日历</h2>
+        <p class="sec-sub">预置公开日程（名称、日期、来源、官方链接、报名说明）。点「加入个人清单」即可纳入自己的安排。</p></div>
+      <div class="ops">
+        <button class="btn ghost sm" id="officialIcsBtn">⤓ 下载公开日程 ICS</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="note" id="officialNote"></div>
+      <div class="grid g3" id="officialGrid" style="margin-top:14px"></div>
+    </div>
+  </section>
+
+  <!-- ============================ 未来 ============================ -->
+  <section class="view" id="view-future">
+    <div class="sec-head">
+      <div><span class="eyebrow">Future</span><h2>方向卡片墙</h2>
+        <p class="sec-sub">每个方向都给出所需能力、已有基础、关键阶段与相邻领域。</p></div>
+      <div class="ops">
+        <select id="dirIntentFilter" class="chip" style="padding:7px 11px"><option value="">全部意向</option></select>
+        <button class="btn" id="addDirBtn">＋ 新增方向</button>
+      </div>
+    </div>
+    <div class="dir-wall" id="dirWall"></div>
+
+    <div class="sec-head">
+      <div><span class="eyebrow">Experiments</span><h2>方向体验卡</h2>
+        <p class="sec-sub">把想法变成正在发生的小尝试：勾选步骤，进度自动汇总，并记录真实反馈。</p></div>
+      <div class="ops">
+        <select id="xpStatusFilter" class="chip" style="padding:7px 11px"><option value="">全部状态</option></select>
+        <button class="btn" id="addXpBtn">＋ 新增体验卡</button>
+      </div>
+    </div>
+    <div class="grid g2" id="xpWall"></div>
+
+    <div class="sec-head">
+      <div><span class="eyebrow">Majors</span><h2>专业探索</h2>
+        <p class="sec-sub">了解程度、学习内容、相关职业与体验建议。</p></div>
+      <div class="ops"><button class="btn" id="addMajorBtn">＋ 新增专业</button></div>
+    </div>
+    <div class="dir-wall" id="majorWall"></div>
+  </section>
+</div>
+
+<footer class="foot-note">数据仅保存在当前浏览器 · 换设备或清理浏览器前，记得在「数据」里<b>导出备份</b></footer>
+
+<!-- ============================ 弹层 ============================ -->
+<div class="overlay hidden" id="formOverlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head"><h3 id="formTitle">编辑</h3><button class="cal-nav" id="formClose" aria-label="关闭">✕</button></div>
+    <div class="modal-body" id="formBody"></div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="formCancel">取消</button>
+      <button class="btn" id="formSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="calOverlay">
+  <div class="modal" style="width:min(520px,100%)">
+    <div class="modal-head"><h3>带上你的时间地图</h3><button class="cal-nav" id="calClose" aria-label="关闭">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:13.5px;color:var(--ink-2);margin:0 0 14px">
+        下载 <b>.ics</b> 日历文件后，用手机或电脑的系统日历应用导入即可加入手机日历。提醒由日历应用发送。
+      </p>
+      <div class="field">
+        <label>提醒时间</label>
+        <select id="icsReminder">
+          <option value="both">提前 7 天及 1 天</option>
+          <option value="week">提前 7 天</option>
+          <option value="day">提前 1 天</option>
+          <option value="none">不设置提醒</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>导出范围</label>
+        <select id="icsScope">
+          <option value="false|false">全部（公开日程 + 我的机会）</option>
+          <option value="true|false">仅公开日程</option>
+          <option value="false|true">仅我的清单</option>
+        </select>
+      </div>
+      <div class="note">这是一次性导入。以后修改了日期，需要重新导出；不会自动同步到手机日历。</div>
+      <p style="font-size:12.5px;color:var(--ink-3);margin:12px 0 0" id="icsSummary"></p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="icsCancel">关闭</button>
+      <button class="btn gold" id="icsDownload">下载日历文件</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="dataOverlay">
+  <div class="modal" role="dialog" aria-modal="true" style="width:min(560px,100%)">
+    <div class="modal-head"><h3>数据与备份</h3><button class="cal-nav" id="dataClose" aria-label="关闭">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--ink-2);margin:0 0 14px">你的数据只保存在<b>当前浏览器</b>里，不会上传，别人也看不到。换设备或清理浏览器前，请先导出备份。</p>
+      <div class="stats data-stats" id="dataStats"></div>
+      <div class="data-actions">
+        <div class="data-action"><div class="da-body"><div class="da-t">清空示例记录</div><div class="da-d">删除所有带「示例（请替换）」标记的记录，保留真实数据与公开日程，可撤销</div></div><button class="btn ghost sm" id="dataClearSamples">清空</button></div>
+        <div class="data-action"><div class="da-body"><div class="da-t">补回示例数据</div><div class="da-d">把缺失的示例记录重新填回，不影响已有记录</div></div><button class="btn ghost sm" id="dataRestoreSamples">补回</button></div>
+        <div class="data-action"><div class="da-body"><div class="da-t">导出备份</div><div class="da-d">下载全部数据的 JSON 文件，妥善保存</div></div><button class="btn sm" id="dataExport">导出</button></div>
+        <div class="data-action"><div class="da-body"><div class="da-t">导入备份</div><div class="da-d">用备份文件覆盖当前数据</div></div><button class="btn ghost sm" id="dataImport">导入</button></div>
+        <div class="data-action"><div class="da-body"><div class="da-t">重置全部数据</div><div class="da-d">丢弃所有修改，恢复为初始示例数据</div></div><button class="btn danger sm" id="dataReset">重置</button></div>
+      </div>
+      <div class="note data-note">公开日程（考试竞赛日历）是真实公开信息，不属于示例记录，清空示例时会保留。<span id="dataSize"></span></div>
+    </div>
+  </div>
+</div>
+<input type="file" id="dataFile" accept=".json,application/json" hidden>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ============================================================
+   大学成长地图 — 前端应用
+   数据存储：浏览器 localStorage（每位访客独立一份，首次打开自动填入示例数据）
+   表结构与示例数据内嵌于本页，无需任何服务端
+   ============================================================ */
+(function () {
+'use strict';
+
+/* ---------------- 内嵌表结构与示例数据（本地模式专用） ---------------- */
+var EMBED_SCHEMA = {"profile":{"title":"个人档案","properties":[{"name":"年级","type":"select","config":{"options":[{"text":"大一"},{"text":"大二"},{"text":"大三"},{"text":"大四"},{"text":"大五及以上"},{"text":"研一"},{"text":"研二"},{"text":"研三"},{"text":"博一"},{"text":"博二"},{"text":"博三"},{"text":"博四及以上"}]}},{"name":"专业","type":"text","config":{}},{"name":"兴趣方向","type":"text","config":{}},{"name":"当前困惑","type":"text","config":{}},{"name":"每周可投入时间","type":"select","config":{"options":[{"text":"3 小时以内"},{"text":"3–6 小时"},{"text":"6–10 小时"},{"text":"10 小时以上"}]}},{"name":"正在考虑的方向","type":"text","config":{}},{"name":"填写日期","type":"date","config":{}},{"name":"地图阶段","type":"text","config":{}}]},"experiences":{"title":"大学经历","properties":[{"name":"名称","type":"text","config":{}},{"name":"类型","type":"select","config":{"options":[{"text":"竞赛"},{"text":"比赛"},{"text":"项目"},{"text":"实习"},{"text":"课程"},{"text":"社团"},{"text":"社会实践"},{"text":"兴趣探索"},{"text":"日常生活"},{"text":"人际相处"},{"text":"自我认识"}]}},{"name":"角色","type":"text","config":{}},{"name":"状态","type":"select","config":{"options":[{"text":"准备中"},{"text":"进行中"},{"text":"已完成"},{"text":"搁置"}]}},{"name":"开始时间","type":"date","config":{}},{"name":"结束时间","type":"date","config":{}},{"name":"职责与成果","type":"text","config":{}},{"name":"能力标签","type":"multi_select","config":{"options":[{"text":"研究分析"},{"text":"写作表达"},{"text":"编程开发"},{"text":"数据分析"},{"text":"视觉设计"},{"text":"内容策划"},{"text":"项目管理"},{"text":"沟通协作"},{"text":"组织协调"},{"text":"外语应用"},{"text":"领导力"},{"text":"自学研究"},{"text":"访谈调研"},{"text":"问题解决"},{"text":"结构化思考"},{"text":"责任心"},{"text":"执行"}]}},{"name":"作品链接","type":"url","config":{}}]},"major":{"title":"专业探索","properties":[{"name":"专业名称","type":"text","config":{}},{"name":"了解程度","type":"select","config":{"options":[{"text":"未了解"},{"text":"初步了解"},{"text":"比较了解"},{"text":"深入了解"},{"text":"已体验"}]}},{"name":"学习内容","type":"text","config":{}},{"name":"相关职业","type":"text","config":{}},{"name":"核心能力","type":"text","config":{}},{"name":"相邻领域","type":"text","config":{}},{"name":"体验建议","type":"text","config":{}}]},"opportunities":{"title":"个人机会","properties":[{"name":"名称","type":"text","config":{}},{"name":"类型","type":"select","config":{"options":[{"text":"竞赛"},{"text":"实习"},{"text":"考试"},{"text":"交换"},{"text":"留学"},{"text":"项目"},{"text":"校内机会"},{"text":"学校通知"},{"text":"其他"},{"text":"社会实践"}]}},{"name":"重要程度","type":"select","config":{"options":[{"text":"高"},{"text":"中"},{"text":"低"}]}},{"name":"状态","type":"select","config":{"options":[{"text":"待了解"},{"text":"待判断"},{"text":"准备中"},{"text":"已报名"},{"text":"已参加"},{"text":"已放弃"}]}},{"name":"来源","type":"text","config":{}},{"name":"活动日期","type":"date","config":{}},{"name":"活动结束日期","type":"date","config":{}},{"name":"截止时间","type":"date","config":{}},{"name":"安排选择","type":"text","config":{}},{"name":"来源标识","type":"text","config":{}},{"name":"活动信息","type":"text","config":{}},{"name":"链接","type":"url","config":{}}]},"directions":{"title":"发展方向","properties":[{"name":"方向名称","type":"text","config":{}},{"name":"一句话简介","type":"text","config":{}},{"name":"所需能力","type":"text","config":{}},{"name":"已有基础","type":"text","config":{}},{"name":"关键阶段","type":"text","config":{}},{"name":"准备事项","type":"text","config":{}},{"name":"意向程度","type":"select","config":{"options":[{"text":"非常感兴趣"},{"text":"感兴趣"},{"text":"了解中"},{"text":"考虑中"},{"text":"观望"},{"text":"不考虑"}]}}]},"experiments":{"title":"方向体验卡","properties":[{"name":"体验目标","type":"text","config":{}},{"name":"关联方向","type":"text","config":{}},{"name":"具体步骤","type":"text","config":{}},{"name":"预计时间","type":"text","config":{}},{"name":"完成状态","type":"select","config":{"options":[{"text":"未开始"},{"text":"进行中"},{"text":"已完成"},{"text":"搁置"}]}},{"name":"体验反馈","type":"text","config":{}},{"name":"步骤进度","type":"text","config":{}}]}};
+var SEED_DATA = {"profile":[{"_id":"pf_demo_bachelor","年级":"大二","专业":"计算机科学与技术 · 示例（请替换）","兴趣方向":"人工智能应用、产品设计、教育科技","当前困惑":"不知道应该先深耕算法还是先积累工程与产品经验，也担心投入竞赛会挤占课程时间","每周可投入时间":"6–10 小时","正在考虑的方向":"算法工程、产品经理、数据分析、教育科技创业","填写日期":"2026-10-01","地图阶段":"{\"degree\": \"bachelor\", \"positions\": {\"bachelor\": 2, \"master\": 0, \"doctor\": 0}, \"profileGrade\": \"大二\"}"},{"_id":"pf_demo_master","年级":"研一","专业":"教育技术学 · 示例（请替换）","兴趣方向":"学习科学、人机交互、课程设计","当前困惑":"研究生阶段想做出有真实影响力的研究，但还没找到具体的问题切口","每周可投入时间":"10 小时以上","正在考虑的方向":"学术研究、教育产品设计、高校教学支持","填写日期":"2026-09-20","地图阶段":"{\"degree\": \"master\", \"positions\": {\"bachelor\": 2, \"master\": 1, \"doctor\": 0}, \"profileGrade\": \"研一\"}"}],"experiences":[{"_id":"ex_demo_01","名称":"全国大学生数学建模竞赛（校赛选拔） · 示例（请替换）","类型":"竞赛","角色":"建模手 / 论文主笔","状态":"已完成","开始时间":"2025-05-10","结束时间":"2025-05-12","职责与成果":"负责问题拆解与论文撰写，三天内完成一篇 22 页论文；校赛三等奖，学会了在压力下分工与交接","能力标签":["研究分析","写作表达","沟通协作","结构化思考"],"作品链接":{"link":"https://www.mcm.edu.cn/","text":"https://www.mcm.edu.cn/"}},{"_id":"ex_demo_02","名称":"校园二手书交易小程序 · 示例（请替换）","类型":"项目","角色":"前端负责人","状态":"已完成","开始时间":"2025-09-01","结束时间":"2025-12-15","职责与成果":"独立完成 12 个页面的开发与 3 次改版，上线后累计 800+ 注册用户、成交 300+ 单","能力标签":["编程开发","项目管理","视觉设计","执行"],"作品链接":{"link":"https://github.com/example/campus-books","text":"https://github.com/example/campus-books"}},{"_id":"ex_demo_03","名称":"大学生创新创业训练计划（校级） · 示例（请替换）","类型":"项目","角色":"项目负责人","状态":"进行中","开始时间":"2026-03-01","结束时间":"2026-12-31","职责与成果":"组建 5 人团队，完成开题与中期检查；负责需求调研与进度管理，已产出 1 份调研报告","能力标签":["项目管理","领导力","访谈调研","写作表达"],"作品链接":null},{"_id":"ex_demo_04","名称":"《数据结构与算法》课程 · 示例（请替换）","类型":"课程","角色":"课代表","状态":"已完成","开始时间":"2025-09-08","结束时间":"2026-01-10","职责与成果":"课程成绩 92 分；整理 12 章复习笔记被班级 30+ 同学使用，并录制了 6 个专题讲解视频","能力标签":["编程开发","结构化思考","自学研究","责任心"],"作品链接":null},{"_id":"ex_demo_05","名称":"程序设计竞赛集训队 · 示例（请替换）","类型":"竞赛","角色":"队员","状态":"已完成","开始时间":"2025-03-01","结束时间":"2025-06-30","职责与成果":"每周 2 次集训，完成 200+ 道算法题；省级选拔赛排名 47/210","能力标签":["编程开发","问题解决","自学研究"],"作品链接":null},{"_id":"ex_demo_06","名称":"校学生会传媒中心 · 示例（请替换）","类型":"社团","角色":"视觉设计组组员","状态":"已完成","开始时间":"2024-10-01","结束时间":"2025-06-30","职责与成果":"设计 30+ 张活动海报与 5 套系列主视觉，单场活动最高触达 2000+ 人次","能力标签":["视觉设计","内容策划","沟通协作","执行"],"作品链接":null},{"_id":"ex_demo_07","名称":"暑期社会实践：乡村教育数字化调研 · 示例（请替换）","类型":"社会实践","角色":"调研小组组长","状态":"已完成","开始时间":"2025-07-05","结束时间":"2025-07-20","职责与成果":"走访 6 所乡村学校，完成 42 份问卷与 9 场访谈，撰写 1.2 万字调研报告获校级优秀","能力标签":["访谈调研","数据分析","写作表达","领导力"],"作品链接":null},{"_id":"ex_demo_08","名称":"校园马拉松志愿者 · 示例（请替换）","类型":"社会实践","角色":"补给站负责人","状态":"已完成","开始时间":"2025-04-13","结束时间":"2025-04-13","职责与成果":"统筹 18 名志愿者与 4 个补给点，服务 1200 名跑者，零投诉","能力标签":["组织协调","责任心","沟通协作"],"作品链接":null},{"_id":"ex_demo_09","名称":"英文播客「Campus Notes」 · 示例（请替换）","类型":"兴趣探索","角色":"主播 / 剪辑","状态":"已完成","开始时间":"2025-08-01","结束时间":"2026-01-20","职责与成果":"独立制作 14 期英文播客，累计播放 5000+；负责脚本、录音与后期","能力标签":["外语应用","内容策划","写作表达","自学研究"],"作品链接":null},{"_id":"ex_demo_10","名称":"第一段实习：教育科技公司产品助理 · 示例（请替换）","类型":"实习","角色":"产品助理","状态":"已完成","开始时间":"2026-07-01","结束时间":"2026-08-28","职责与成果":"参与 2 个版本迭代，独立完成 3 份竞品分析与 1 份用户访谈报告（16 位受访者）","能力标签":["访谈调研","内容策划","数据分析","沟通协作"],"作品链接":null},{"_id":"ex_demo_11","名称":"开源项目 first-contributions 中文文档 · 示例（请替换）","类型":"项目","角色":"贡献者","状态":"已完成","开始时间":"2025-11-01","结束时间":"2025-11-30","职责与成果":"提交 9 个 PR，其中 7 个被合并；主要修复文档错漏并补充中文示例","能力标签":["编程开发","写作表达","责任心"],"作品链接":{"link":"https://github.com/firstcontributions/first-contributions","text":"https://github.com/firstcontributions/first-contributions"}},{"_id":"ex_demo_12","名称":"班级学习互助小组 · 示例（请替换）","类型":"社团","角色":"发起人","状态":"已完成","开始时间":"2025-03-15","结束时间":"2025-06-20","职责与成果":"发起每周一次的互助答疑，累计 14 场，参与人次 120+；小组平均分提升 4.2 分","能力标签":["领导力","沟通协作","组织协调","责任心"],"作品链接":null},{"_id":"ex_demo_13","名称":"数学分析期中辅导讲义 · 示例（请替换）","类型":"课程","角色":"作者","状态":"已完成","开始时间":"2025-04-01","结束时间":"2025-05-20","职责与成果":"编写 8 万字辅导讲义，含 60 道例题详解，被两个班级使用","能力标签":["写作表达","研究分析","结构化思考"],"作品链接":null},{"_id":"ex_demo_14","名称":"校园摄影展《四月的窗》 · 示例（请替换）","类型":"兴趣探索","角色":"策展人","状态":"已完成","开始时间":"2025-04-20","结束时间":"2025-05-10","职责与成果":"策划并落地 1 场 40 幅作品的摄影展，观展 600+ 人次","能力标签":["内容策划","视觉设计","组织协调","执行"],"作品链接":null},{"_id":"ex_demo_15","名称":"英语角组织者 · 示例（请替换）","类型":"社团","角色":"组织者","状态":"已完成","开始时间":"2024-11-01","结束时间":"2025-05-30","职责与成果":"组织 20 场英语角，邀请 6 位留学生参与，形成固定的口语练习机制","能力标签":["外语应用","组织协调","沟通协作"],"作品链接":null},{"_id":"ex_demo_16","名称":"数据分析竞赛：泰迪杯 · 示例（请替换）","类型":"竞赛","角色":"数据清洗与建模","状态":"已完成","开始时间":"2025-03-20","结束时间":"2025-04-25","职责与成果":"完成 12 万行数据清洗与特征工程，建模部分 AUC 0.86；获省级二等奖","能力标签":["数据分析","编程开发","研究分析"],"作品链接":null},{"_id":"ex_demo_17","名称":"实验室科研助理 · 示例（请替换）","类型":"实习","角色":"科研助理","状态":"已完成","开始时间":"2026-03-01","结束时间":"2026-06-30","职责与成果":"协助完成 2 组实验的数据采集与整理，参与撰写 1 篇会议论文（在投）","能力标签":["研究分析","数据分析","自学研究","责任心"],"作品链接":null},{"_id":"ex_demo_18","名称":"宿舍改造计划 · 示例（请替换）","类型":"日常生活","角色":"发起人","状态":"已完成","开始时间":"2025-02-20","结束时间":"2025-03-10","职责与成果":"用 500 元预算改造宿舍公共区域，动手做书架与照明，室友满意度明显提升","能力标签":["执行","视觉设计","问题解决"],"作品链接":null},{"_id":"ex_demo_19","名称":"第一次独自旅行：去成都看展 · 示例（请替换）","类型":"日常生活","角色":"独自出行","状态":"已完成","开始时间":"2025-01-15","结束时间":"2025-01-22","职责与成果":"独立规划 8 天行程与预算，参观 4 个博物馆，写了 1 篇 3000 字游记","能力标签":["执行","写作表达","问题解决","自学研究"],"作品链接":null},{"_id":"ex_demo_20","名称":"与导师的一次深入谈话 · 示例（请替换）","类型":"自我认识","角色":"受访者","状态":"已完成","开始时间":"2026-09-15","结束时间":"2026-09-15","职责与成果":"梳理了自己的能力清单与顾虑，明确「先做出一个完整作品」比「广泛尝试」更重要","能力标签":["结构化思考","沟通协作","责任心"],"作品链接":null},{"_id":"ex_demo_21","名称":"学生会换届竞选 · 示例（请替换）","类型":"社团","角色":"候选人","状态":"已完成","开始时间":"2025-06-10","结束时间":"2025-06-10","职责与成果":"完成 5 分钟公开演讲与答辩，落选但收获了 12 份真实反馈","能力标签":["写作表达","沟通协作","结构化思考","责任心"],"作品链接":null},{"_id":"ex_demo_22","名称":"AI 学习笔记专栏 · 示例（请替换）","类型":"兴趣探索","角色":"作者","状态":"进行中","开始时间":"2026-08-01","结束时间":"","职责与成果":"持续更新 18 篇 AI 应用笔记，单篇最高阅读 3000+，形成自己的知识索引","能力标签":["内容策划","自学研究","写作表达"],"作品链接":null}],"major":[{"_id":"mj_demo_01","专业名称":"计算机科学与技术 · 示例（请替换）","了解程度":"比较了解","学习内容":"程序设计与数据结构、算法、操作系统、计算机网络、数据库、软件工程、人工智能导论","相关职业":"后端开发工程师、算法工程师、数据工程师、产品经理、技术咨询","核心能力":"编程能力、抽象建模、系统思维、持续自学","相邻领域":"数据科学、认知科学、教育技术、人机交互、金融科技","体验建议":"完整写一个上线的小产品，观察自己是否享受调试过程"},{"_id":"mj_demo_02","专业名称":"软件工程 · 示例（请替换）","了解程度":"比较了解","学习内容":"需求工程、软件架构、测试与质量保证、项目管理、敏捷开发流程","相关职业":"软件开发工程师、测试工程师、项目经理、DevOps 工程师、技术负责人","核心能力":"工程化思维、协作开发、代码规范、需求拆解","相邻领域":"产品设计、人工智能工程、信息安全、企业信息化","体验建议":"参与一个多人协作的真实仓库，体验一次完整的代码评审"},{"_id":"mj_demo_03","专业名称":"人工智能 · 示例（请替换）","了解程度":"初步了解","学习内容":"机器学习、深度学习、自然语言处理、计算机视觉、强化学习、模型部署","相关职业":"算法工程师、AI 产品经理、研究科学家、数据标注与评测工程师","核心能力":"数学基础、编程、实验设计、论文阅读","相邻领域":"认知科学、机器人、计算语言学、生物信息","体验建议":"跑通一个开源模型并写一篇复现笔记，验证自己是否喜欢调参"},{"_id":"mj_demo_04","专业名称":"数据科学与大数据技术 · 示例（请替换）","了解程度":"初步了解","学习内容":"统计学、概率论、数据挖掘、可视化、分布式计算、因果推断","相关职业":"数据分析师、数据科学家、商业分析师、增长分析师","核心能力":"统计思维、SQL、数据可视化、业务理解","相邻领域":"经济学、市场营销、公共卫生、运筹学","体验建议":"找一个真实数据集，独立回答一个自己好奇的问题"},{"_id":"mj_demo_05","专业名称":"教育技术学 · 示例（请替换）","了解程度":"深入了解","学习内容":"学习科学、教学设计、教育心理学、教育测量与评价、教育产品设计","相关职业":"教育产品经理、教学设计者、教育研究员、教育信息化顾问","核心能力":"教学设计、用户研究、课程开发、数据分析","相邻领域":"认知心理学、人机交互、计算机科学、传播学","体验建议":"为身边一位同学设计并交付一份两周学习方案，跟踪效果"},{"_id":"mj_demo_06","专业名称":"心理学 · 示例（请替换）","了解程度":"初步了解","学习内容":"普通心理学、发展心理学、认知心理学、心理统计与测量、实验设计","相关职业":"心理咨询师、用户研究员、人力资源、教育研究、行为数据分析","核心能力":"实验设计、统计分析、共情沟通、文献阅读","相邻领域":"神经科学、教育学、人机交互、社会学","体验建议":"精读一篇实验论文并尝试复现它的实验逻辑"},{"_id":"mj_demo_07","专业名称":"汉语言文学 · 示例（请替换）","了解程度":"初步了解","学习内容":"中国古代文学、现代文学、语言学概论、文学理论、写作训练","相关职业":"编辑出版、语文教师、文案策划、内容运营、文化研究","核心能力":"文本细读、写作、批判性思维、资料检索","相邻领域":"新闻传播、出版、戏剧影视、文化创意产业","体验建议":"坚持写一个月的阅读笔记，看自己是否愿意长期与文本打交道"},{"_id":"mj_demo_08","专业名称":"新闻传播学 · 示例（请替换）","了解程度":"初步了解","学习内容":"新闻采访与写作、传播理论、媒介伦理、视听传播、新媒体运营","相关职业":"记者、内容运营、品牌传播、公共关系、纪录片制作","核心能力":"采访沟通、快速写作、选题判断、事实核查","相邻领域":"社会学、影视制作、市场营销、数据新闻","体验建议":"在一个月内完成 3 篇真实采访稿并公开发布"},{"_id":"mj_demo_09","专业名称":"工业设计 · 示例（请替换）","了解程度":"未了解","学习内容":"设计素描、人机工程学、材料与工艺、产品结构设计、设计史","相关职业":"工业设计师、交互设计师、用户体验设计师、结构工程师","核心能力":"手绘表达、三维建模、用户同理心、审美判断","相邻领域":"机械工程、交互设计、材料科学、品牌设计","体验建议":"用一周时间改造一件生活用品并记录改进理由"},{"_id":"mj_demo_10","专业名称":"经济学 · 示例（请替换）","了解程度":"初步了解","学习内容":"微观经济学、宏观经济学、计量经济学、博弈论、金融学原理","相关职业":"经济分析师、政策研究、金融从业、咨询顾问、数据分析","核心能力":"建模能力、数据处理、逻辑推理、写作表达","相邻领域":"金融学、公共政策、数据科学、商业分析","体验建议":"用经济学概念解释一个身边的真实现象并写成短文"},{"_id":"mj_demo_11","专业名称":"生物医学工程 · 示例（请替换）","了解程度":"未了解","学习内容":"生理学基础、生物力学、医学影像、信号处理、医疗器械设计","相关职业":"医疗器械研发、临床工程师、医学影像算法、生物技术研究","核心能力":"跨学科学习、实验动手、工程建模、文献阅读","相邻领域":"临床医学、电子工程、材料科学、人工智能","体验建议":"参观一次实验室或医院设备科，了解一个设备的工作原理"},{"_id":"mj_demo_12","专业名称":"环境科学 · 示例（请替换）","了解程度":"未了解","学习内容":"环境化学、生态学、环境监测、环境规划与管理、环境工程基础","相关职业":"环境咨询、环保监测、政策研究、ESG 分析、可持续发展项目","核心能力":"实验分析、数据分析、政策解读、跨部门沟通","相邻领域":"公共管理、能源经济、城市规划、化学工程","体验建议":"参与一次本地环境监测志愿活动并整理数据"}],"opportunities":[{"_id":"op_official_mcm","名称":"全国大学生数学建模竞赛","类型":"竞赛","重要程度":"高","状态":"待了解","来源":"中国工业与应用数学学会（全国组委会）","活动日期":"2026-09-10","活动结束日期":"2026-09-13","截止时间":"2026-08-20","安排选择":"","来源标识":"official:mcm","活动信息":"每年 9 月举行，赛期连续三天；一般由学校统一组织报名，校内选拔与报名截止时间以本校通知为准。","链接":{"link":"https://www.mcm.edu.cn/","text":"https://www.mcm.edu.cn/"},"_official":true},{"_id":"op_official_teacher-cert","名称":"中小学教师资格考试（笔试）","类型":"考试","重要程度":"高","状态":"待了解","来源":"教育部教育考试院 / 中小学教师资格考试网","活动日期":"2026-11-07","活动结束日期":"2026-11-07","截止时间":"2026-09-15","安排选择":"","来源标识":"official:teacher-cert","活动信息":"笔试通常每年上下半年各一次；报名一般提前约 1 个半月开放，需在户籍或学籍所在地报考，具体以官网公告为准。","链接":{"link":"https://ntce.neea.edu.cn/","text":"https://ntce.neea.edu.cn/"},"_official":true},{"_id":"op_official_cet","名称":"全国大学英语四、六级考试（笔试）","类型":"考试","重要程度":"高","状态":"待了解","来源":"教育部教育考试院 / 中国教育考试网","活动日期":"2026-12-19","活动结束日期":"2026-12-19","截止时间":"2026-09-25","安排选择":"","来源标识":"official:cet","活动信息":"笔试通常每年 6 月与 12 月举行；大一能否报考及报名时间以本校通知为准。","链接":{"link":"https://cet.neea.edu.cn/","text":"https://cet.neea.edu.cn/"},"_official":true},{"_id":"op_official_ncre","名称":"全国计算机等级考试（NCRE）","类型":"考试","重要程度":"中","状态":"待了解","来源":"教育部教育考试院 / NCRE 官网","活动日期":"2026-12-05","活动结束日期":"2026-12-06","截止时间":"2026-11-05","安排选择":"","来源标识":"official:ncre","活动信息":"全年一般组织两次或四次考试，科目自选；是否需要报考应结合专业与目标岗位判断。","链接":{"link":"https://ncre.neea.edu.cn/","text":"https://ncre.neea.edu.cn/"},"_official":true},{"_id":"op_official_cltt","名称":"普通话水平测试","类型":"考试","重要程度":"中","状态":"待了解","来源":"国家普通话水平测试网 / 本校测试站","活动日期":"2026-11-21","活动结束日期":"2026-11-21","截止时间":"2026-10-20","安排选择":"","来源标识":"official:cltt","活动信息":"师范、播音主持及部分职业较关注；各地与本校报名批次不同，请关注测试站通知。","链接":{"link":"https://www.cltt.org/","text":"https://www.cltt.org/"},"_official":true},{"_id":"op_official_cisau","名称":"中国国际大学生创新大赛","类型":"竞赛","重要程度":"高","状态":"待了解","来源":"教育部 / 学校创新创业学院","活动日期":"2026-10-15","活动结束日期":"2027-01-10","截止时间":"2026-09-30","安排选择":"","来源标识":"official:cisau","活动信息":"原「互联网+」大赛，需组队并经过校赛、省赛、国赛选拔；赛程以教育部与学校当年通知为准。","链接":{"link":"https://cy.ncss.cn/","text":"https://cy.ncss.cn/"},"_official":true},{"_id":"op_official_challenge-cup","名称":"「挑战杯」全国大学生课外学术科技作品竞赛","类型":"竞赛","重要程度":"高","状态":"待了解","来源":"共青团中央 / 中国科协 / 教育部","活动日期":"2026-11-01","活动结束日期":"2026-11-30","截止时间":"2026-09-28","安排选择":"","来源标识":"official:challenge-cup","活动信息":"两年一届，分自然科学类学术论文、哲学社会科学类社会调查报告、科技发明制作三类；校级选拔先行。","链接":{"link":"https://www.tiaozhanbei.net/","text":"https://www.tiaozhanbei.net/"},"_official":true},{"_id":"op_official_acm-icpc","名称":"ICPC / CCPC 程序设计竞赛（区域赛）","类型":"竞赛","重要程度":"高","状态":"待了解","来源":"ICPC 亚洲区组委会 / 中国大学生程序设计竞赛组委会","活动日期":"2026-11-14","活动结束日期":"2026-11-15","截止时间":"2026-10-10","安排选择":"","来源标识":"official:acm-icpc","活动信息":"三人一队，需通过网络预选赛或学校名额报名；建议先在校内集训队打基础。","链接":{"link":"https://icpc.global/","text":"https://icpc.global/"},"_official":true},{"_id":"op_official_mathorcup","名称":"MathorCup 高校数学建模挑战赛","类型":"竞赛","重要程度":"中","状态":"待了解","来源":"中国优选法统筹法与经济数学研究会","活动日期":"2027-04-10","活动结束日期":"2027-04-14","截止时间":"2027-03-20","安排选择":"","来源标识":"official:mathorcup","活动信息":"春季举办的数学建模类赛事，适合作为国赛前的练习；线上报名、线上提交。","链接":{"link":"https://www.mathorcup.org/","text":"https://www.mathorcup.org/"},"_official":true},{"_id":"op_official_mathercup","名称":"「认证杯」数学中国数学建模国际赛","类型":"竞赛","重要程度":"低","状态":"待了解","来源":"数学中国（内蒙古自治区数学学会）","活动日期":"2026-12-03","活动结束日期":"2026-12-07","截止时间":"2026-11-25","安排选择":"","来源标识":"official:mathercup","活动信息":"难度适中的建模练习赛，适合第一次参赛的同学积累完整赛程经验。","链接":{"link":"http://www.madio.net/","text":"http://www.madio.net/"},"_official":true},{"_id":"op_official_teddy","名称":"「泰迪杯」数据挖掘挑战赛","类型":"竞赛","重要程度":"中","状态":"待了解","来源":"泰迪杯数据挖掘挑战赛组委会","活动日期":"2027-03-05","活动结束日期":"2027-04-25","截止时间":"2027-02-28","安排选择":"","来源标识":"official:teddy","活动信息":"面向数据分析与挖掘的实战型竞赛，赛期较长，适合作为数据分析作品来源。","链接":{"link":"https://www.tipdm.org/","text":"https://www.tipdm.org/"},"_official":true},{"_id":"op_official_exchange-csc","名称":"国家公派 / 校际交换生项目申报","类型":"交换","重要程度":"中","状态":"待了解","来源":"国家留学基金委 / 本校国际交流处","活动日期":"2027-09-01","活动结束日期":"2028-06-30","截止时间":"2026-12-15","安排选择":"","来源标识":"official:exchange-csc","活动信息":"交换名额与语言要求（如雅思、托福）以学校国际交流处通知为准，建议提前一学期准备材料。","链接":{"link":"https://www.csc.edu.cn/","text":"https://www.csc.edu.cn/"},"_official":true},{"_id":"op_official_pgrad-exam","名称":"全国硕士研究生招生考试（初试）","类型":"考试","重要程度":"高","状态":"待了解","来源":"中国研究生招生信息网（研招网）","活动日期":"2026-12-26","活动结束日期":"2026-12-27","截止时间":"2026-10-25","安排选择":"","来源标识":"official:pgrad-exam","活动信息":"预报名通常在 9 月下旬，正式报名 10 月，11 月网上确认；具体时间以研招网当年公告为准。","链接":{"link":"https://yz.chsi.com.cn/","text":"https://yz.chsi.com.cn/"},"_official":true},{"_id":"op_official_scholarship","名称":"国家奖学金 / 校级奖学金评审","类型":"校内机会","重要程度":"高","状态":"待了解","来源":"本校学生工作部（处）","活动日期":"2026-10-20","活动结束日期":"2026-11-15","截止时间":"2026-10-12","安排选择":"","来源标识":"official:scholarship","活动信息":"一般每学年秋季评审，需提交成绩单、获奖证明与个人陈述；材料与截止时间以学院通知为准。","链接":{"link":"https://www.moe.gov.cn/","text":"https://www.moe.gov.cn/"},"_official":true},{"_id":"op_demo_01","名称":"蓝桥杯全国软件和信息技术专业人才大赛 · 示例（请替换）","类型":"竞赛","重要程度":"中","状态":"准备中","来源":"大赛官网","活动日期":"2027-04-11","活动结束日期":"2027-04-12","截止时间":"2026-12-20","安排选择":"","来源标识":"demo:op01","活动信息":"个人赛，分 Java/C++/Python 等组别；校赛与省赛分阶段进行，适合作为算法练习的检验。","链接":{"link":"https://dasai.lanqiao.cn/","text":"https://dasai.lanqiao.cn/"}},{"_id":"op_demo_02","名称":"互联网大厂暑期实习（后端方向） · 示例（请替换）","类型":"实习","重要程度":"高","状态":"准备中","来源":"企业招聘官网","活动日期":"2027-07-01","活动结束日期":"2027-09-30","截止时间":"2027-03-15","安排选择":"","来源标识":"demo:op02","活动信息":"暑期实习通常提前半年开放网申，需准备简历、算法笔试与两到三轮面试。","链接":{"link":"https://www.nowcoder.com/","text":"https://www.nowcoder.com/"}},{"_id":"op_demo_03","名称":"学院「本科生进实验室」计划 · 示例（请替换）","类型":"校内机会","重要程度":"高","状态":"已报名","来源":"学院教务与科研办公室","活动日期":"2026-11-01","活动结束日期":"2027-06-30","截止时间":"2026-10-18","安排选择":"","来源标识":"demo:op03","活动信息":"可在导师课题组参与真实科研项目，为毕业论文与保研积累材料；名额有限需尽早联系导师。","链接":{"link":"https://www.example.edu.cn/","text":"https://www.example.edu.cn/"}},{"_id":"op_demo_04","名称":"学校赴新加坡国立大学交换选拔 · 示例（请替换）","类型":"交换","重要程度":"中","状态":"待判断","来源":"国际交流处","活动日期":"2027-08-01","活动结束日期":"2027-12-31","截止时间":"2026-11-30","安排选择":"","来源标识":"demo:op04","活动信息":"要求绩点 3.5 以上并通过英语面试；需评估费用与学分转换。","链接":{"link":"https://www.example.edu.cn/","text":"https://www.example.edu.cn/"}},{"_id":"op_demo_05","名称":"校园开放日「专业体验营」志愿者招募 · 示例（请替换）","类型":"校内机会","重要程度":"低","状态":"已放弃","来源":"校团委","活动日期":"2026-11-08","活动结束日期":"2026-11-08","截止时间":"2026-10-30","安排选择":"","来源标识":"demo:op05","活动信息":"面向新生的专业体验活动，可锻炼组织与讲解能力；与课程冲突故放弃。","链接":{"link":"https://www.example.edu.cn/","text":"https://www.example.edu.cn/"}},{"_id":"op_demo_06","名称":"产品经理实习（教育行业） · 示例（请替换）","类型":"实习","重要程度":"中","状态":"待了解","来源":"企业招聘官网","活动日期":"2027-01-10","活动结束日期":"2027-03-31","截止时间":"2026-12-05","安排选择":"","来源标识":"demo:op06","活动信息":"偏重于需求调研与竞品分析，适合把「教育技术」兴趣落到真实业务。","链接":{"link":"https://www.zhipin.com/","text":"https://www.zhipin.com/"}},{"_id":"op_demo_07","名称":"全国大学生英语竞赛（NECCS） · 示例（请替换）","类型":"竞赛","重要程度":"低","状态":"待了解","来源":"高等学校大学外语教学研究会","活动日期":"2027-04-19","活动结束日期":"2027-04-19","截止时间":"2027-03-10","安排选择":"","来源标识":"demo:op07","活动信息":"分 A/B/C/D 四类，本科生一般报 C 类；初赛决赛分阶段。","链接":{"link":"https://www.chinaneccs.cn/","text":"https://www.chinaneccs.cn/"}},{"_id":"op_demo_08","名称":"「三下乡」暑期社会实践立项 · 示例（请替换）","类型":"社会实践","重要程度":"中","状态":"待判断","来源":"校团委","活动日期":"2027-07-10","活动结束日期":"2027-08-10","截止时间":"2027-05-20","安排选择":"","来源标识":"demo:op08","活动信息":"需提交立项书与预算，结项后有优秀团队评选；适合把调研成果延伸成作品。","链接":{"link":"https://www.example.edu.cn/","text":"https://www.example.edu.cn/"}},{"_id":"op_demo_09","名称":"学校创新创业训练计划（国家级） · 示例（请替换）","类型":"项目","重要程度":"高","状态":"已参加","来源":"教务处","活动日期":"2026-03-01","活动结束日期":"2026-12-31","截止时间":"2026-02-20","安排选择":"","来源标识":"demo:op09","活动信息":"国家级大创需中期检查与结题答辩，可作为项目经历与保研加分材料。","链接":{"link":"https://www.example.edu.cn/","text":"https://www.example.edu.cn/"}},{"_id":"op_demo_10","名称":"数据结构助教（勤工助学） · 示例（请替换）","类型":"校内机会","重要程度":"中","状态":"待了解","来源":"学院教务办公室","活动日期":"2027-02-20","活动结束日期":"2027-06-30","截止时间":"2027-01-15","安排选择":"","来源标识":"demo:op10","活动信息":"协助课程答疑与作业批改，巩固基础的同时积累讲解经验。","链接":{"link":"https://www.example.edu.cn/","text":"https://www.example.edu.cn/"}},{"_id":"op_demo_11","名称":"开源之夏 OSPP 学生开发者申请 · 示例（请替换）","类型":"项目","重要程度":"中","状态":"待了解","来源":"开源之夏组委会","活动日期":"2027-07-01","活动结束日期":"2027-09-30","截止时间":"2027-05-31","安排选择":"","来源标识":"demo:op11","活动信息":"为开源社区贡献代码并完成结项，有导师指导与项目奖金；需提前熟悉社区代码。","链接":{"link":"https://summer-ospp.ac.cn/","text":"https://summer-ospp.ac.cn/"}},{"_id":"op_demo_12","名称":"校园招聘会（秋季专场） · 示例（请替换）","类型":"校内机会","重要程度":"中","状态":"待了解","来源":"学校就业指导中心","活动日期":"2026-11-15","活动结束日期":"2026-11-16","截止时间":"2026-11-10","安排选择":"","来源标识":"demo:op12","活动信息":"集中了解行业与岗位要求，建议提前准备简历并现场投递。","链接":{"link":"https://www.example.edu.cn/","text":"https://www.example.edu.cn/"}}],"directions":[{"_id":"dr_demo_01","方向名称":"算法工程师 · 示例（请替换）","一句话简介":"用模型和数据解决真实问题，把效果指标做上去","所需能力":"数学基础、编程能力、机器学习理论、实验设计、工程部署","已有基础":"修完数据结构与算法、线性代数；刷过 200+ 算法题；完成过 1 个建模项目","关键阶段":"大二打基础 → 大三做项目与实习 → 大四秋招或保研","准备事项":"系统学习机器学习课程；完成 2 个端到端项目；准备算法笔试","意向程度":"非常感兴趣"},{"_id":"dr_demo_02","方向名称":"后端开发工程师 · 示例（请替换）","一句话简介":"为业务搭建稳定、可扩展的服务端系统","所需能力":"编程语言、数据结构、数据库、网络协议、系统设计","已有基础":"掌握一门语言与基础框架；做过 1 个上线的小程序后端","关键阶段":"大二补计算机基础 → 大三实习与开源 → 大四秋招","准备事项":"深入一门语言；学习数据库与中间件；参与真实项目","意向程度":"非常感兴趣"},{"_id":"dr_demo_03","方向名称":"数据科学家 · 示例（请替换）","一句话简介":"用数据回答业务问题并驱动决策","所需能力":"统计学、SQL、机器学习、可视化、业务理解、因果推断","已有基础":"会 SQL 与 Python；做过一次完整的数据分析竞赛","关键阶段":"大二学统计与工具 → 大三做业务分析实习 → 大四定位行业","准备事项":"补齐统计学基础；完成 3 个真实数据集分析；练习讲数据故事","意向程度":"感兴趣"},{"_id":"dr_demo_04","方向名称":"产品经理 · 示例（请替换）","一句话简介":"在用户需求与技术可行性之间找到最优解","所需能力":"需求分析、用户研究、数据分析、沟通协调、文档写作","已有基础":"做过产品助理实习；完成 3 份竞品分析；组织过跨职能协作","关键阶段":"大二了解产品方法 → 大三实习积累作品 → 大四校招","准备事项":"补充交互与商业知识；独立负责一个功能模块；整理作品集","意向程度":"非常感兴趣"},{"_id":"dr_demo_05","方向名称":"用户体验设计师 · 示例（请替换）","一句话简介":"让产品在被使用的瞬间让人觉得顺手、舒服","所需能力":"视觉基础、交互设计、用户研究、原型工具、审美判断","已有基础":"有视觉设计组经历；完成过 30+ 张视觉物料","关键阶段":"大二练工具与审美 → 大三做作品集 → 大四实习转正","准备事项":"系统学习交互原则；完成 3 个完整改版案例并做作品集","意向程度":"感兴趣"},{"_id":"dr_demo_06","方向名称":"教育科技产品设计 · 示例（请替换）","一句话简介":"把学习科学的发现变成学生真正用得上的产品","所需能力":"教学设计、用户研究、产品方法、数据分析、跨学科沟通","已有基础":"教育技术学基础 + 产品助理实习 + 教育调研经历","关键阶段":"大二补产品能力 → 大三进教育公司实习 → 大四定方向深耕","准备事项":"学习教育测量基础；找到一个真实学习痛点并做最小验证","意向程度":"非常感兴趣"},{"_id":"dr_demo_07","方向名称":"学术研究（保研 / 直博） · 示例（请替换）","一句话简介":"在具体问题上做出可被同行检验的新贡献","所需能力":"文献阅读、实验设计、统计与写作、长期专注","已有基础":"进过实验室；参与 1 篇在投论文；有 1 份调研报告","关键阶段":"大二进组 → 大三出成果 → 大四保研或直博","准备事项":"确定研究问题；坚持每周读论文；争取一次会议投稿","意向程度":"考虑中"},{"_id":"dr_demo_08","方向名称":"数据分析师 · 示例（请替换）","一句话简介":"让团队每个人都能看懂数据在说什么","所需能力":"SQL、统计、可视化、业务理解、报表自动化","已有基础":"完成过数据清洗与建模；会用可视化工具","关键阶段":"大二练工具 → 大三实习 → 大四进入行业","准备事项":"做 2 份完整分析报告；学习指标体系搭建","意向程度":"感兴趣"},{"_id":"dr_demo_09","方向名称":"技术型创业者 · 示例（请替换）","一句话简介":"把自己发现的问题做成一个有人用的产品","所需能力":"产品判断、快速实现、团队组织、融资沟通、抗压","已有基础":"做过 2 个项目；有 800+ 用户的小程序上线经验","关键阶段":"大二做小产品 → 大三找合伙人验证 → 大四决定是否全职","准备事项":"完成一次真实付费验证；补齐财务与法务常识","意向程度":"了解中"},{"_id":"dr_demo_10","方向名称":"高校教学支持 / 教育信息化 · 示例（请替换）","一句话简介":"让老师把精力放在教学上，而不是工具上","所需能力":"教学设计、培训能力、信息系统理解、沟通协调","已有基础":"教育技术学背景；做过助教与课程支持","关键阶段":"大二学教学理论 → 大三做教学支持实习 → 大四进高校或企业","准备事项":"熟悉主流教学平台；完成一次真实教师培训","意向程度":"了解中"},{"_id":"dr_demo_11","方向名称":"咨询顾问 · 示例（请替换）","一句话简介":"在有限时间里快速理解一个行业并给出建议","所需能力":"结构化思考、快速学习、数据分析、表达与演示","已有基础":"有调研与报告撰写经验；做过 2 次公开演讲","关键阶段":"大二练案例 → 大三实习 → 大四秋招","准备事项":"练习案例面试；补充财务与行业知识；打磨表达","意向程度":"观望"},{"_id":"dr_demo_12","方向名称":"不考研直接就业 · 示例（请替换）","一句话简介":"用实践替代学历，尽早进入真实工作环境","所需能力":"工程能力、项目经验、求职技巧、自我管理","已有基础":"已有 1 段实习与 2 个完整项目","关键阶段":"大三实习 → 大四秋招 → 提前适应职场","准备事项":"明确目标岗位；积累可展示的作品；准备面试","意向程度":"考虑中"}],"experiments":[{"_id":"xp_demo_01","体验目标":"验证自己是否喜欢「把模型调好」的过程 · 示例（请替换）","关联方向":"算法工程师","具体步骤":"1. 选一个公开数据集\n2. 跑通一个基线模型\n3. 尝试 3 种改进并记录指标\n4. 写一篇复现笔记","预计时间":"两周 · 每周 6 小时","完成状态":"已完成","体验反馈":"调参确实让我专注，但对纯调参容易失去耐心；更喜欢把模型落到具体场景。步骤 3 的对照组设计让我第一次体会到「可复现」的价值。","步骤进度":"4/4"},{"_id":"xp_demo_02","体验目标":"完整体验一次后端接口从设计到上线 · 示例（请替换）","关联方向":"后端开发工程师","具体步骤":"1. 设计 3 张表的数据库结构\n2. 实现 5 个 REST 接口\n3. 部署到云服务器并压测\n4. 写下遇到的问题清单","预计时间":"三周 · 每周 8 小时","完成状态":"进行中","体验反馈":"设计接口比写代码更花时间，但很有成就感。","步骤进度":"2/4"},{"_id":"xp_demo_03","体验目标":"用真实数据回答一个自己好奇的问题 · 示例（请替换）","关联方向":"数据科学家","具体步骤":"1. 提出一个具体可验证的问题\n2. 找到并清洗数据\n3. 做描述性与相关性分析\n4. 用 5 页报告讲清结论","预计时间":"两周 · 每周 5 小时","完成状态":"已完成","体验反馈":"发现「问对问题」比「跑对模型」更难，也更有意思。","步骤进度":"4/4"},{"_id":"xp_demo_04","体验目标":"做一个完整功能模块的产品设计 · 示例（请替换）","关联方向":"产品经理","具体步骤":"1. 访谈 5 位真实用户\n2. 画出用户流程图\n3. 写一份 PRD 并评审\n4. 跟进开发并复盘数据","预计时间":"四周 · 每周 6 小时","完成状态":"进行中","体验反馈":"访谈让我推翻了自己最初的假设，这个纠正过程很有价值。","步骤进度":"3/4"},{"_id":"xp_demo_05","体验目标":"设计并交付一份两周学习方案 · 示例（请替换）","关联方向":"教育科技产品设计","具体步骤":"1. 找到 1 位真实的学习者\n2. 诊断他的具体卡点\n3. 设计两周的练习与反馈机制\n4. 跟踪效果并访谈感受","预计时间":"三周 · 每周 4 小时","完成状态":"已完成","体验反馈":"设计者视角和学习者视角差距很大；对方在第 5 天放弃，让我意识到反馈频率比内容质量更关键。","步骤进度":"4/4"},{"_id":"xp_demo_06","体验目标":"完整做一次用户界面改版 · 示例（请替换）","关联方向":"用户体验设计师","具体步骤":"1. 选择一个现有页面\n2. 做 5 份可用性观察\n3. 重新设计并说明理由\n4. 请 3 人盲测评价","预计时间":"两周 · 每周 5 小时","完成状态":"未开始","体验反馈":"","步骤进度":"0/4"},{"_id":"xp_demo_07","体验目标":"读透一篇领域内的重要论文 · 示例（请替换）","关联方向":"学术研究（保研 / 直博）","具体步骤":"1. 选一篇高被引论文\n2. 逐段翻译并画出方法框架\n3. 复现实验的核心逻辑\n4. 写下 3 个可延伸的问题","预计时间":"一周 · 6 小时","完成状态":"已完成","体验反馈":"第一次读完全不懂，第二遍画出框架后才贯通；我确实享受这种「从混乱到清晰」的过程。","步骤进度":"4/4"},{"_id":"xp_demo_08","体验目标":"在一个开源社区提交第一个 PR · 示例（请替换）","关联方向":"后端开发工程师","具体步骤":"1. 挑选 good first issue\n2. 本地跑通项目\n3. 修改并通过测试\n4. 回应评审意见","预计时间":"两周 · 每周 5 小时","完成状态":"已完成","体验反馈":"被 review 出 7 个问题，但这是成长最快的一次经历。","步骤进度":"4/4"},{"_id":"xp_demo_09","体验目标":"给一群真实听众做一次行业分享 · 示例（请替换）","关联方向":"咨询顾问","具体步骤":"1. 确定一个听众关心的主题\n2. 收集 3 个真实案例\n3. 做 15 分钟分享\n4. 收集反馈并复盘","预计时间":"一周 · 5 小时","完成状态":"未开始","体验反馈":"","步骤进度":"0/4"},{"_id":"xp_demo_10","体验目标":"用最小成本验证一个真实需求 · 示例（请替换）","关联方向":"技术型创业者","具体步骤":"1. 找到 10 位有同样困扰的人\n2. 用一个落地页收集意向\n3. 尝试收取 1 元定金\n4. 判断是否值得继续","预计时间":"三周 · 每周 6 小时","完成状态":"进行中","体验反馈":"10 人里有 3 人愿意付定金，比我预期少，但真实得多。","步骤进度":"2/4"},{"_id":"xp_demo_11","体验目标":"旁听一次目标岗位的真实工作流程 · 示例（请替换）","关联方向":"数据分析师","具体步骤":"1. 联系 1 位在职从业者\n2. 申请一次线上观察或跟岗\n3. 记录他的日常任务清单\n4. 对比自己的想象写差异笔记","预计时间":"一周 · 4 小时","完成状态":"未开始","体验反馈":"","步骤进度":"0/4"},{"_id":"xp_demo_12","体验目标":"体验一次教师培训的完整设计 · 示例（请替换）","关联方向":"高校教学支持 / 教育信息化","具体步骤":"1. 访谈 3 位一线教师\n2. 找出一个共同痛点\n3. 设计 1 小时培训\n4. 试讲并收集反馈","预计时间":"两周 · 每周 5 小时","完成状态":"未开始","体验反馈":"","步骤进度":"0/4"},{"_id":"xp_demo_13","体验目标":"给自己排一次完整的求职时间线 · 示例（请替换）","关联方向":"不考研直接就业","具体步骤":"1. 列出 10 个目标岗位\n2. 对照 JD 找出能力缺口\n3. 制定 3 个月补齐计划\n4. 投递 5 家做真实检验","预计时间":"四周 · 每周 3 小时","完成状态":"未开始","体验反馈":"","步骤进度":"0/4"},{"_id":"xp_demo_14","体验目标":"把一次经历写成可展示的作品集页 · 示例（请替换）","关联方向":"产品经理","具体步骤":"1. 选一个最有代表性的项目\n2. 用 STAR 结构梳理过程\n3. 补充数据结果与截图\n4. 找 2 人试读并修改","预计时间":"一周 · 5 小时","完成状态":"已完成","体验反馈":"写出来才发现自己很多「成果」没有量化，以后会刻意记录数据。","步骤进度":"4/4"},{"_id":"xp_demo_15","体验目标":"做一个能讲清楚的个人技术博客 · 示例（请替换）","关联方向":"算法工程师","具体步骤":"1. 确定 3 个想写透的主题\n2. 每个主题写一篇长文\n3. 发布并收集反馈\n4. 根据反馈修订一篇","预计时间":"三周 · 每周 5 小时","完成状态":"搁置","体验反馈":"写到第二篇时动力不足，可能我更喜欢动手而不是写作。","步骤进度":"1/4"},{"_id":"xp_demo_16","体验目标":"体验一次完整的课程助教工作 · 示例（请替换）","关联方向":"高校教学支持 / 教育信息化","具体步骤":"1. 申请一门课的助教\n2. 负责 2 次答疑\n3. 批改 1 次作业并写反馈\n4. 请学生评价讲解效果","预计时间":"一学期 · 每周 4 小时","完成状态":"未开始","体验反馈":"","步骤进度":"0/4"}]};
+
+/* ---------------- 常量与工具 ---------------- */
+var TABLE_KEYS = ['profile', 'experiences', 'major', 'opportunities', 'directions', 'experiments'];
+var TABLE_LABEL = { profile: '个人档案', experiences: '大学经历', major: '专业探索',
+  opportunities: '个人机会', directions: '发展方向', experiments: '方向体验卡' };
+var MARK = '示例（请替换）';
+var STAGES = [
+  { key: 'bachelor', label: '本科生', icon: '◇' },
+  { key: 'master', label: '硕士生', icon: '▱' },
+  { key: 'doctor', label: '博士生', icon: '✧' }
+];
+var INTENT_ORDER = ['非常感兴趣', '感兴趣', '了解中', '考虑中', '观望', '不考虑'];
+var WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
+
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+function esc(v) {
+  return String(v === null || v === undefined ? '' : v).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function pad(n) { return String(n).padStart(2, '0'); }
+function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function todayISO() { return ymd(new Date()); }
+function parseYmd(s) {
+  var m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(s || ''));
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+}
+function normDate(s) {
+  var d = parseYmd(s);
+  return d ? ymd(d) : '';
+}
+function addDays(iso, n) {
+  var d = parseYmd(iso);
+  if (!d) return '';
+  d.setDate(d.getDate() + n);
+  return ymd(d);
+}
+function daysUntil(iso) {
+  var d = parseYmd(iso);
+  if (!d) return null;
+  var t = parseYmd(todayISO());
+  return Math.round((d - t) / 86400000);
+}
+function deltaText(n) {
+  if (n === null) return '';
+  if (n < 0) return '已过 ' + Math.abs(n) + ' 天';
+  if (n === 0) return '今天截止';
+  if (n === 1) return '明天截止';
+  if (n <= 7) return '还剩 ' + n + ' 天';
+  if (n <= 30) return '剩 ' + n + ' 天';
+  return '剩 ' + Math.round(n / 30) + ' 个月';
+}
+function isSample(rec) { return JSON.stringify(rec || {}).includes(MARK); }
+function isOfficial(rec) { return String((rec || {})['来源标识'] || '').indexOf('official:') === 0; }
+function isPlanned(rec) { return (rec || {})['安排选择'] === 'planned'; }
+/** url 字段在资料库中读回为 [{link,text}] 数组，这里统一压平成 {link,text} */
+function linkOf(v) {
+  if (!v) return '';
+  if (typeof v === 'string') return v;
+  if (Array.isArray(v)) return v.length ? linkOf(v[0]) : '';
+  return v.link || '';
+}
+function linkText(v) {
+  if (!v) return '';
+  if (typeof v === 'string') return v;
+  if (Array.isArray(v)) return v.length ? linkText(v[0]) : '';
+  return v.text || v.link || '';
+}
+function firstDate() {
+  for (var i = 0; i < arguments.length; i++) if (arguments[i]) return arguments[i];
+  return '';
+}
+function truncate(s, n) {
+  s = String(s || '');
+  return s.length > n ? s.slice(0, n - 1) + '…' : s;
+}
+/** 把「具体步骤」拆成步骤数组（与参考实现一致的分隔规则） */
+function parseSteps(text) {
+  return String(text || '').split(/[\n；;]+/).map(function (s) {
+    return s.trim().replace(/^(?:\d+[.、）)]|[-•])\s*/, '');
+  }).filter(Boolean);
+}
+
+/* ---------------- 数据层：浏览器本地存储（每位访客独立一份） ---------------- */
+var STORE = {
+  data: { profile: [], experiences: [], major: [], opportunities: [], directions: [], experiments: [] },
+  schema: null, online: false, busy: 0
+};
+var LS_KEY = 'college_growth_atlas_v1';
+var FIRST_SEED = false;
+
+function setSync(state, text) {
+  var pill = $('#syncPill');
+  pill.className = 'sync-pill ' + state;
+  $('#syncText').textContent = text;
+}
+function busy(delta) {
+  STORE.busy = Math.max(0, STORE.busy + delta);
+  if (STORE.busy > 0) setSync('busy', '保存中…');
+  else refreshSyncPill();
+}
+function refreshSyncPill() {
+  setSync('local', '本地数据 · 已保存在此浏览器');
+}
+
+function localSave() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ tables: STORE.data })); }
+  catch (e) { toast('保存失败：浏览器存储不可用或已满', 'err'); }
+}
+function localLoad() {
+  try {
+    var raw = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+    if (raw && raw.tables) return raw.tables;
+  } catch (e) {}
+  return null;
+}
+function seedData() {
+  var tables = {};
+  TABLE_KEYS.forEach(function (k) {
+    tables[k] = (SEED_DATA[k] || []).map(function (r) { return JSON.parse(JSON.stringify(r)); });
+  });
+  return tables;
+}
+
+function buildSchema() {
+  STORE.schema = {
+    tables: TABLE_KEYS.map(function (k) {
+      var t = EMBED_SCHEMA[k] || { title: TABLE_LABEL[k], properties: [] };
+      return { key: k, name: t.title, properties: t.properties };
+    })
+  };
+}
+
+function loadInitial() {
+  buildSchema();
+  var saved = localLoad();
+  if (saved) {
+    STORE.data = saved;
+  } else {
+    STORE.data = seedData();
+    FIRST_SEED = true;
+    localSave();
+  }
+  TABLE_KEYS.forEach(function (k) { if (!Array.isArray(STORE.data[k])) STORE.data[k] = []; });
+  refreshSyncPill();
+  return Promise.resolve();
+}
+
+function tableProps(key) {
+  var tables = (STORE.schema && STORE.schema.tables) || [];
+  var t = tables.filter(function (x) { return x.key === key; })[0];
+  return (t && t.properties) || [];
+}
+function optionsOf(key, field) {
+  var p = tableProps(key).filter(function (x) { return x.name === field; })[0];
+  if (!p) return [];
+  var raw = (p.config && p.config.options) || [];
+  return raw.map(function (o) { return (o && o.text !== undefined) ? o.text : o; });
+}
+
+/* ---- 写操作：全部落在本地存储，即时生效 ---- */
+function localId(prefix) { return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+function dbAdd(key, props) {
+  busy(1);
+  var rec = Object.assign({}, props, { _id: localId(key.slice(0, 2)) });
+  STORE.data[key].push(rec);
+  localSave(); busy(-1);
+  return Promise.resolve(rec);
+}
+function dbUpdate(key, id, props) {
+  busy(1);
+  var rec = STORE.data[key].filter(function (r) { return r._id === id; })[0];
+  if (rec) Object.assign(rec, props);
+  localSave(); busy(-1);
+  return Promise.resolve(rec);
+}
+function dbDelete(key, id) {
+  busy(1);
+  STORE.data[key] = STORE.data[key].filter(function (r) { return r._id !== id; });
+  localSave(); busy(-1);
+  return Promise.resolve();
+}
+function dbBulkDelete(key, ids) {
+  busy(1);
+  var removed = STORE.data[key].filter(function (r) { return ids.indexOf(r._id) !== -1; });
+  STORE.data[key] = STORE.data[key].filter(function (r) { return ids.indexOf(r._id) === -1; });
+  localSave(); busy(-1);
+  return Promise.resolve(removed);
+}
+/** 撤销恢复：把整条记录按原字段写回 */
+function dbRestore(key, records) {
+  busy(1);
+  records.forEach(function (r) {
+    if (!STORE.data[key].some(function (x) { return x._id === r._id; })) STORE.data[key].push(r);
+  });
+  localSave(); busy(-1);
+  return Promise.resolve(records.length);
+}
+/* ---------------- 提示 ---------------- */
+function toast(msg, kind, undoLabel, onUndo) {
+  var wrap = $('#toastWrap');
+  var el = document.createElement('div');
+  el.className = 'toast' + (kind === 'warn' ? ' warn' : kind === 'err' ? ' err' : '');
+  el.innerHTML = '<span>' + esc(msg) + '</span>';
+  if (undoLabel && onUndo) {
+    var b = document.createElement('button');
+    b.className = 'undo';
+    b.textContent = undoLabel;
+    b.onclick = function () { el.remove(); onUndo(); };
+    el.appendChild(b);
+  }
+  wrap.appendChild(el);
+  setTimeout(function () { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; }, undoLabel ? 7000 : 2600);
+  setTimeout(function () { el.remove(); }, undoLabel ? 7500 : 3100);
+}
+
+/* ---------------- 档案与学位阶段 ---------------- */
+function currentProfile() { return STORE.data.profile[0] || null; }
+function profileStage(rec) {
+  var raw = rec && rec['地图阶段'];
+  if (raw) {
+    try {
+      var j = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (j && j.degree) return j;
+    } catch (e) {}
+  }
+  return { degree: 'bachelor', positions: { bachelor: 0, master: 0, doctor: 0 }, profileGrade: (rec && rec['年级']) || '' };
+}
+function stageOf(rec) {
+  var d = profileStage(rec).degree || 'bachelor';
+  return STAGES.filter(function (s) { return s.key === d; })[0] || STAGES[0];
+}
+
+/* ============================================================
+   渲染：总览
+   ============================================================ */
+var CAL = { y: new Date().getFullYear(), m: new Date().getMonth(), day: '' };
+
+function renderHero() {
+  var p = currentProfile();
+  var stage = stageOf(p);
+  var sw = $('#degreeSwitch');
+  sw.innerHTML = STAGES.map(function (s) {
+    return '<button data-degree="' + s.key + '"' + (s.key === stage.key ? ' class="active"' : '') + '>' +
+      esc(s.icon + ' ' + s.label) + '</button>';
+  }).join('');
+  $('#heroTitle').textContent = '你好，' + (p ? (p['年级'] ? p['年级'] + '的同学' : '追光的同学') : '追光的同学');
+  $('#heroGrade').textContent = (stage.icon || '') + ' ' + (p && p['年级'] ? p['年级'] : '年级待填写') + ' · ' + stage.label;
+  $('#heroMajor').textContent = p && p['专业'] ? truncate(String(p['专业']).replace(' · ' + MARK, ''), 18) : '专业待填写';
+}
+
+/** 能力画像：聚合能力标签占比（剔除示例记录） */
+function renderCapability() {
+  var includeSample = $('#includeSampleStats').checked;
+  var exps = STORE.data.experiences;
+  var real = exps.filter(function (r) { return !isSample(r); });
+  var pool = includeSample ? exps : real;
+  var counts = {};
+  pool.forEach(function (r) {
+    var tags = r['能力标签'];
+    (Array.isArray(tags) ? tags : tags ? [tags] : []).forEach(function (t) {
+      if (t) counts[t] = (counts[t] || 0) + 1;
+    });
+  });
+  var entries = Object.keys(counts).map(function (k) { return { k: k, n: counts[k] }; })
+    .sort(function (a, b) { return b.n - a.n; });
+  var total = entries.reduce(function (s, e) { return s + e.n; }, 0);
+  var max = entries.length ? entries[0].n : 1;
+
+  var box = $('#capabilityBars');
+  if (!entries.length) {
+    box.innerHTML = '<div class="empty"><span class="big">◕</span>' +
+      '还没有可用于统计的真实经历。<br>带「示例（请替换）」标记的 ' + exps.length + ' 条示例记录已按规则剔除。<br>' +
+      '<span style="font-size:12px">勾选右上角「预览：含示例数据」可以先看看效果，或到「过去」新增一条真实经历。</span></div>';
+  } else {
+    box.innerHTML = entries.slice(0, 12).map(function (e) {
+      var pct = total ? Math.round(e.n / total * 100) : 0;
+      return '<div class="bar-row"><span class="nm" title="' + esc(e.k) + '">' + esc(e.k) + '</span>' +
+        '<span class="bar-track"><i style="width:' + Math.round(e.n / max * 100) + '%"></i></span>' +
+        '<span class="val">' + pct + '%</span></div>';
+    }).join('');
+  }
+
+  var planned = STORE.data.opportunities.filter(isPlanned).length;
+  var official = STORE.data.opportunities.filter(isOfficial).length;
+  var doneXp = STORE.data.experiments.filter(function (r) { return r['完成状态'] === '已完成'; }).length;
+  $('#overviewStats').innerHTML = [
+    ['真实经历', real.length, ''],
+    ['示例经历', exps.length - real.length, 'gold'],
+    ['能力标签', entries.length, ''],
+    ['候选方向', STORE.data.directions.length, 'blue'],
+    ['我的安排', planned + ' / ' + official, 'gold'],
+    ['已完成体验', doneXp + ' / ' + STORE.data.experiments.length, '']
+  ].map(function (s) {
+    return '<div class="stat ' + s[2] + '"><b>' + esc(s[1]) + '</b><small>' + esc(s[0]) + '</small></div>';
+  }).join('');
+
+  var totalAll = exps.length;
+  var sampleAll = totalAll - real.length;
+  $('#sampleLegend').innerHTML =
+    '共 <b>' + totalAll + '</b> 条经历，其中 <b>' + sampleAll + '</b> 条带「' + esc(MARK) + '」标记' +
+    (includeSample ? '（当前已纳入预览）' : '（已自动剔除）');
+}
+
+/**
+ * 方向星图：按意向程度由内向外排布。
+ * 几何策略（全部用像素计算，避免椭圆在宽容器里被拉扁）：
+ *   1. 每个「意向程度」占一条同心轨道，半径由内向外递增；
+ *   2. 轨道半径按容器实际尺寸拟合，并保证最内圈不与中心芯盘相碰；
+ *   3. 节点位置用「贪心最大间距」选角度：在 0..358° 里挑一个离已放置节点
+ *      和中心芯盘最远的角度，从内圈到外圈依次放置。
+ * 这样节点两两不重叠、不盖住中心，也不会溢出容器。
+ */
+var STAR_TIERS = ['非常感兴趣', '感兴趣', '了解中', '考虑中', '观望', '不考虑'];
+var STAR_ORB = [66, 62, 58, 54, 50, 48];
+
+function renderStarMap() {
+  var el = $('#starMap');
+  var dirs = STORE.data.directions.slice();
+
+  var groups = {};
+  dirs.forEach(function (d) {
+    var k = STAR_TIERS.indexOf(d['意向程度']) === -1 ? '了解中' : d['意向程度'];
+    (groups[k] = groups[k] || []).push(d);
+  });
+  var tiers = STAR_TIERS.filter(function (k) { return groups[k] && groups[k].length; });
+
+  // 容器尺寸：视图隐藏时 clientWidth 为 0，用兜底值保证布局仍然合法
+  var W = el.clientWidth || 900;
+  var H = el.clientHeight || 520;
+  var CX = W / 2;
+  var CY = H * 0.52;
+
+  var CORE_R = 52;                       // 中心芯盘半径（含边框）
+  var padX = 42, padY = 50;              // 预留标签与描边空间
+  var availX = Math.max(60, W / 2 - padX);
+  var availY = Math.max(60, H / 2 - padY);
+  var maxOrb = STAR_ORB[0] / 2;
+  var rMin = CORE_R + maxOrb + 10;       // 最内圈半径
+  var fMin = Math.max(rMin / availX, rMin / availY);
+  fMin = Math.min(fMin, 0.86);
+
+  var T = tiers.length;
+  var orbit = {};
+  tiers.forEach(function (k, i) {
+    var f = T <= 1 ? 0.72 : fMin + (1 - fMin) * (i / (T - 1));
+    orbit[k] = { rx: availX * f, ry: availY * f };
+  });
+
+  var placed = [];
+  var nodes = [];
+
+  tiers.forEach(function (k) {
+    var list = groups[k].slice().sort(function (a, b) {
+      return String(a['方向名称']).localeCompare(String(b['方向名称']));
+    });
+    var o = orbit[k];
+    var rOrb = STAR_ORB[STAR_TIERS.indexOf(k)] / 2;
+
+    list.forEach(function (d, i) {
+      var natural = (list.length === 1 ? -Math.PI / 2 : (i / list.length) * Math.PI * 2 - Math.PI / 2);
+      var best = null;
+      for (var deg = 0; deg < 360; deg += 2) {
+        var ang = (deg * Math.PI) / 180;
+        var x = CX + Math.cos(ang) * o.rx;
+        var y = CY + Math.sin(ang) * o.ry;
+
+        // 必须留在容器内（含圆点半径）
+        if (x - rOrb < 2 || x + rOrb > W - 2) continue;
+        if (y - rOrb < 2 || y + rOrb > H - 2) continue;
+
+        // 与中心芯盘保持间距
+        var coreGap = Math.hypot(x - CX, y - CY) - (CORE_R + rOrb);
+        if (coreGap < 6) continue;
+
+        // 与已放置节点的最小间距（>0 表示不重叠）
+        var minGap = Infinity;
+        for (var j = 0; j < placed.length; j += 1) {
+          var q = placed[j];
+          var needGap = rOrb + q.r + 8;
+          var gap = Math.hypot(x - q.x, y - q.y) - needGap;
+          if (gap < minGap) minGap = gap;
+          if (minGap < 0) break;
+        }
+
+        // 综合得分：先保证不重叠，再尽量贴近自然角度
+        var dAng = Math.abs(((ang - natural + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+        var score = (minGap === Infinity ? 100 : Math.min(minGap, 60)) - dAng * 3;
+        if (!best || score > best.score) best = { x: x, y: y, score: score, ang: ang };
+      }
+      if (!best) {
+        var a2 = natural;
+        best = { x: CX + Math.cos(a2) * o.rx, y: CY + Math.sin(a2) * o.ry };
+      }
+      placed.push({ x: best.x, y: best.y, r: rOrb });
+      nodes.push({ d: d, x: best.x, y: best.y, r: rOrb, tier: k });
+    });
+  });
+
+  // 输出：轨道 + 节点 + 中心芯盘
+  var html = '';
+  tiers.forEach(function (k) {
+    var o = orbit[k];
+    html += '<span class="ring" style="left:' + CX.toFixed(1) + 'px;top:' + CY.toFixed(1) + 'px;' +
+      'width:' + (o.rx * 2).toFixed(1) + 'px;height:' + (o.ry * 2).toFixed(1) + 'px;' +
+      'transform:translate(-50%,-50%)"></span>';
+  });
+
+  html += nodes.map(function (n, i) {
+    var d = n.d;
+    var tierIdx = STAR_TIERS.indexOf(n.tier);
+    var cls = tierIdx <= 0 ? 'p-high' : tierIdx <= 2 ? 'p-mid' : 'p-low';
+    var nm = String(d['方向名称'] || '').replace(' · ' + MARK, '');
+    return '<button class="star-node ' + cls + '" style="left:' + n.x.toFixed(1) + 'px;top:' + n.y.toFixed(1) + 'px;--nd:' + Math.min(i * 70, 700) + 'ms;--fd:-' + ((i % 7) * 0.8).toFixed(1) + 's"' +
+      ' data-dir="' + esc(d._id) + '" title="' + esc(nm + ' · ' + (d['一句话简介'] || '')) + '">' +
+      '<span class="orb" style="width:' + (n.r * 2) + 'px;height:' + (n.r * 2) + 'px;font-size:' +
+      (tierIdx <= 0 ? 11.5 : 10.5) + 'px">' + esc(truncate(nm, tierIdx <= 0 ? 9 : 7)) + '</span>' +
+      '<span class="lbl">' + esc(n.tier) + '</span></button>';
+  }).join('');
+
+  var high = dirs.filter(function (d) { return /非常感兴趣/.test(d['意向程度'] || ''); }).length;
+  html += '<div class="core" style="left:' + CX.toFixed(1) + 'px;top:' + CY.toFixed(1) + 'px">' +
+    '<b>' + dirs.length + ' 个方向</b><small>' + high + ' 个非常感兴趣</small></div>';
+
+  if (!dirs.length) {
+    html += '<div style="position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);text-align:center;color:var(--ink-3);font-size:13px">还没有候选方向<br><span style="font-size:12px">到「未来」新增一个方向</span></div>';
+  }
+  el.innerHTML = html;
+}
+
+function renderFocus() {
+  // 进行中的体验卡
+  var running = STORE.data.experiments.filter(function (r) { return r['完成状态'] === '进行中'; });
+  running = running.concat(STORE.data.experiments.filter(function (r) { return r['完成状态'] === '未开始'; }));
+  $('#focusExperiments').innerHTML = running.length ? running.slice(0, 4).map(function (r) {
+    var steps = parseSteps(r['具体步骤']);
+    var done = checkedSteps(r).length;
+    var nm = String(r['体验目标'] || '').replace(' · ' + MARK, '');
+    return '<div class="item"><div class="body"><div class="t">' + esc(truncate(nm, 40)) + '</div>' +
+      '<div class="d">' + esc(r['关联方向'] || '未关联方向') + ' · ' + esc(r['预计时间'] || '时间待定') + ' · 进度 ' + done + '/' + steps.length + '</div></div>' +
+      '<div class="right"><span class="t-tag on">' + esc(r['完成状态'] || '未开始') + '</span></div></div>';
+  }).join('') : '<div class="empty"><span class="big">◈</span>还没有进行中的体验卡<br><span style="font-size:12px">到「未来」挑一件事开始</span></div>';
+
+  // 未来 7 天截止
+  var soon = STORE.data.opportunities.map(function (r) {
+    return { r: r, d: daysUntil(r['截止时间']) };
+  }).filter(function (x) {
+    return x.d !== null && x.d >= 0 && x.d <= 7 && x.r['状态'] !== '已参加' && x.r['状态'] !== '已放弃';
+  }).sort(function (a, b) { return a.d - b.d; });
+
+  $('#focusDeadlines').innerHTML = soon.length ? soon.map(function (x) {
+    var r = x.r;
+    var nm = String(r['名称'] || '').replace(' · ' + MARK, '');
+    return '<div class="item"><div class="when"><b>' + x.d + '</b><small>' + (x.d === 0 ? '今天' : '天后') + '</small></div>' +
+      '<div class="body"><div class="t">' + esc(nm) + '</div>' +
+      '<div class="d">' + esc(r['类型'] || '') + ' · 截止 ' + esc(r['截止时间'] || '') + ' · ' + esc(r['来源'] || '') + '</div></div>' +
+      '<div class="right">' + (isOfficial(r) ? '<span class="t-tag mid">公开日程</span>' : '') +
+      (isPlanned(r) ? '<span class="t-tag on">已加入</span>' : '') + '</div></div>';
+  }).join('') : '<div class="empty"><span class="big">⌛</span>未来 7 天没有截止节点<br><span style="font-size:12px">可以到「现在」的考试竞赛日历里挑一个安排</span></div>';
+}
+
+/* ---------------- 日历 ---------------- */
+/** 日历上的事件：长赛期只在起始日与结束日各落一次，避免刷满整月 */
+function calendarEvents() {
+  var mineOnly = $('#calMineOnly') && $('#calMineOnly').checked;
+  var list = [];
+  STORE.data.opportunities.forEach(function (r) {
+    if (mineOnly && !isPlanned(r)) return;
+    var nm = String(r['名称'] || '').replace(' · ' + MARK, '');
+    var typ = r['类型'] || '';
+    var due = normDate(r['截止时间']);
+    if (due) list.push({ date: due, end: due, kind: 'deadline', title: nm + '（报名截止）', rec: r, rawKind: 'deadline' });
+    var st = normDate(r['活动日期']);
+    var en = normDate(r['活动结束日期']) || st;
+    if (st) {
+      var kind = typ === '考试' ? 'exam' : /竞赛|比赛|项目/.test(typ) ? 'comp' : 'other';
+      var multi = en && en !== st;
+      list.push({ date: st, end: st, kind: kind, title: nm + (multi ? '（开始）' : ''), rec: r, rawKind: 'event' });
+      // 跨日赛期：只在结束日再落一次，中间不铺满
+      if (multi) list.push({ date: en, end: en, kind: kind, title: nm + '（结束）', rec: r, rawKind: 'event' });
+    }
+  });
+  return list;
+}
+function eventsOnDay(list, key) {
+  return list.filter(function (e) { return e.date <= key && e.end >= key; });
+}
+var CAL_KIND_COLOR = { exam: '#e6eff5', comp: '#e8f4ec', deadline: '#fbeade', other: '#e6f2eb' };
+
+function renderCalInto(gridEl, titleEl, statsEl, opts) {
+  var y = CAL.y, m = CAL.m;
+  var events = calendarEvents();
+  var first = new Date(y, m, 1);
+  var offset = (first.getDay() + 6) % 7;
+  var daysInMonth = new Date(y, m + 1, 0).getDate();
+  var firstDay = ymd(first);
+  var lastDay = ymd(new Date(y, m + 1, 0));
+  var inMonth = events.filter(function (e) { return e.date <= lastDay && e.end >= firstDay; }).length;
+  var today = todayISO();
+
+  titleEl.textContent = y + ' 年 ' + (m + 1) + ' 月';
+
+  var cells = Math.ceil((offset + daysInMonth) / 7) * 7;
+  var html = WEEKDAYS.map(function (w) { return '<div class="cal-wd">' + w + '</div>'; }).join('');
+  for (var n = 0; n < cells; n++) {
+    var d = new Date(y, m, 1 - offset + n);
+    var key = ymd(d);
+    var items = eventsOnDay(events, key);
+    var cls = 'cal-day' + (d.getMonth() !== m ? ' outside' : '') + (key === today ? ' today' : '') +
+      (CAL.day === key ? ' selected' : '') + (items.length ? ' has-ev' : '');
+    var shown = items.slice(0, 2).map(function (e) {
+      var label = String(e.rec['名称'] || '').replace(' · ' + MARK, '');
+      if (e.rawKind === 'deadline') label = '⏰ ' + label;
+      return '<span class="cal-ev ' + e.kind + (isPlanned(e.rec) ? ' mine' : '') + '" title="' + esc(e.title) + '">' + esc(truncate(label, 12)) + '</span>';
+    }).join('');
+    if (items.length > 2) shown += '<span class="cal-more">还有 ' + (items.length - 2) + ' 项</span>';
+    html += '<button class="' + cls + '" data-day="' + key + '" aria-label="' + key + '，' + items.length + ' 项安排">' +
+      '<span class="dnum">' + d.getDate() + '</span>' + shown + '</button>';
+  }
+  gridEl.innerHTML = html;
+
+  var planned = STORE.data.opportunities.filter(isPlanned).length;
+  var pending = STORE.data.opportunities.filter(function (r) { return !isPlanned(r) && isOfficial(r); }).length;
+  statsEl.textContent = '本月 ' + inMonth + ' 个时间节点 · 我的安排 ' + planned + ' 项 · 待确定 ' + pending + ' 项';
+}
+
+function renderOverviewCalendar() {
+  renderCalInto($('#ovCalGrid'), $('#ovCalTitle'), $('#ovCalStats'));
+}
+function renderNowCalendar() {
+  renderCalInto($('#nowCalGrid'), $('#nowCalTitle'), $('#nowCalStats'));
+  renderCalDayDetail();
+}
+function renderCalDayDetail() {
+  var box = $('#calDayDetail');
+  if (!CAL.day) { box.innerHTML = ''; return; }
+  var items = eventsOnDay(calendarEvents(), CAL.day);
+  box.innerHTML = '<h4 style="font-size:13px;margin-bottom:9px">' + esc(CAL.day) + ' 的安排（' + items.length + ' 项）</h4>' +
+    (items.length ? '<div class="list">' + items.map(function (e) {
+      var nm = String(e.rec['名称'] || '').replace(' · ' + MARK, '');
+      return '<div class="item"><div class="body"><div class="t">' + esc(nm) +
+        (e.rawKind === 'deadline' ? ' <span class="t-tag high">报名截止</span>' : '') + '</div>' +
+        '<div class="d">' + esc(e.rec['类型'] || '') + ' · ' + esc(e.rec['来源'] || '') + '</div></div>' +
+        '<div class="right">' + (isPlanned(e.rec)
+          ? '<span class="t-tag on">已加入我的清单</span>'
+          : '<button class="btn ghost sm" data-plan="' + esc(e.rec._id) + '">加入个人清单</button>') + '</div></div>';
+    }).join('') + '</div>' : '<div class="empty">这一天还没有安排</div>');
+}
+
+/* ============================================================
+   渲染：过去
+   ============================================================ */
+var EXP_FILTERS = { type: '', status: '', q: '', selected: {} };
+
+function filteredExperiences() {
+  var q = EXP_FILTERS.q.toLowerCase();
+  return STORE.data.experiences.filter(function (r) {
+    if (EXP_FILTERS.type && r['类型'] !== EXP_FILTERS.type) return false;
+    if (EXP_FILTERS.status && r['状态'] !== EXP_FILTERS.status) return false;
+    if (q) {
+      var blob = [r['名称'], r['角色'], r['职责与成果'], (r['能力标签'] || []).join(' '), r['类型']].join(' ').toLowerCase();
+      if (blob.indexOf(q) === -1) return false;
+    }
+    return true;
+  });
+}
+
+function renderPastStats() {
+  var all = STORE.data.experiences;
+  var real = all.filter(function (r) { return !isSample(r); });
+  var tags = {};
+  all.forEach(function (r) {
+    (Array.isArray(r['能力标签']) ? r['能力标签'] : []).forEach(function (t) { tags[t] = (tags[t] || 0) + 1; });
+  });
+  var years = {};
+  all.forEach(function (r) { var y = String(r['开始时间'] || '').slice(0, 4) || '未填'; years[y] = (years[y] || 0) + 1; });
+
+  $('#pastStats').innerHTML = [
+    ['经历总数', all.length, ''],
+    ['真实记录', real.length, ''],
+    ['示例记录', all.length - real.length, 'gold'],
+    ['覆盖年份', Object.keys(years).length, 'blue'],
+    ['能力标签种类', Object.keys(tags).length, ''],
+    ['已完成', all.filter(function (r) { return r['状态'] === '已完成'; }).length, '']
+  ].map(function (s) {
+    return '<div class="stat ' + s[2] + '"><b>' + esc(s[1]) + '</b><small>' + esc(s[0]) + '</small></div>';
+  }).join('');
+}
+
+function renderTimeline() {
+  var rows = filteredExperiences();
+  var byYear = {};
+  rows.forEach(function (r) {
+    var y = String(r['开始时间'] || '').slice(0, 4) || '时间待填';
+    (byYear[y] = byYear[y] || []).push(r);
+  });
+  var years = Object.keys(byYear).sort(function (a, b) { return b.localeCompare(a); });
+
+  $('#expCount').textContent = '共 ' + rows.length + ' 条' +
+    (rows.length !== STORE.data.experiences.length ? '（总 ' + STORE.data.experiences.length + ' 条）' : '');
+
+  var box = $('#timeline');
+  if (!rows.length) {
+    box.innerHTML = '<div class="empty"><span class="big">▤</span>没有符合条件的经历<br><span style="font-size:12px">试试调整筛选，或点「新增经历」补一条</span></div>';
+    return;
+  }
+
+  box.innerHTML = years.map(function (y) {
+    var items = byYear[y].slice().sort(function (a, b) {
+      return String(b['开始时间'] || '').localeCompare(String(a['开始时间'] || ''));
+    });
+    return '<div class="year-block"><div class="year-head"><span class="y">' + esc(y) + '</span>' +
+      '<span class="line"></span><span class="n">' + items.length + ' 条</span></div>' +
+      '<div class="tl">' + items.map(expCardHTML).join('') + '</div></div>';
+  }).join('');
+}
+
+function expCardHTML(r) {
+  var sample = isSample(r);
+  var nm = String(r['名称'] || '').replace(' · ' + MARK, '');
+  var tags = Array.isArray(r['能力标签']) ? r['能力标签'] : [];
+  var link = linkOf(r['作品链接']);
+  var period = [normDate(r['开始时间']), normDate(r['结束时间'])].filter(Boolean).join(' → ') || '时间待填';
+  return '<div class="tl-item' + (sample ? ' sample' : '') + '"><div class="exp-card' + (sample ? ' sample' : '') + '">' +
+    '<div class="head"><span class="ck-wrap"><input type="checkbox" class="ck" data-exp-sel="' + esc(r._id) + '"' +
+    (EXP_FILTERS.selected[r._id] ? ' checked' : '') + '></span>' +
+    '<span class="t">' + esc(nm) + '</span>' +
+    (sample ? '<span class="t-tag sample">' + esc(MARK) + '</span>' : '<span class="t-tag on">真实记录</span>') +
+    '</div>' +
+    '<div class="meta"><span class="t-tag">' + esc(r['类型'] || '未分类') + '</span>' +
+    '<span class="t-tag ' + (r['状态'] === '已完成' ? 'on' : r['状态'] === '进行中' ? 'mid' : 'low') + '">' + esc(r['状态'] || '未填状态') + '</span>' +
+    '<span>' + esc(r['角色'] || '角色待填') + '</span><span>·</span><span>' + esc(period) + '</span></div>' +
+    (r['职责与成果'] ? '<div class="duty">' + esc(r['职责与成果']) + '</div>' : '') +
+    (tags.length ? '<div class="tags">' + tags.map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('') + '</div>' : '') +
+    '<div class="ops-row" style="margin-top:11px">' +
+    (link ? '<a class="lnk" href="' + esc(link) + '" target="_blank" rel="noopener">查看作品 →</a>' : '') +
+    '<button class="lnk" data-edit="experiences" data-id="' + esc(r._id) + '">编辑</button>' +
+    '<button class="lnk del" data-del="experiences" data-id="' + esc(r._id) + '">删除</button>' +
+    '</div></div></div>';
+}
+
+function renderEvidenceTable() {
+  var rows = filteredExperiences();
+  $('#evidenceTable tbody').innerHTML = rows.length ? rows.map(function (r) {
+    var sample = isSample(r);
+    var nm = String(r['名称'] || '').replace(' · ' + MARK, '');
+    var tags = Array.isArray(r['能力标签']) ? r['能力标签'] : [];
+    var link = linkOf(r['作品链接']);
+    return '<tr' + (sample ? ' class="is-sample"' : '') + '><td class="wrap-cell">' + esc(nm) +
+      (sample ? ' <span class="t-tag sample">示例</span>' : '') + '</td>' +
+      '<td>' + esc(r['类型'] || '') + '</td><td>' + esc(r['角色'] || '') + '</td>' +
+      '<td style="white-space:nowrap">' + esc(r['状态'] || '') + '</td>' +
+      '<td style="white-space:nowrap">' + esc([normDate(r['开始时间']), normDate(r['结束时间'])].filter(Boolean).join(' → ') || '—') + '</td>' +
+      '<td class="wrap-cell">' + (tags.length ? tags.map(function (t) { return '<span class="t-tag">' + esc(t) + '</span>'; }).join(' ') : '—') + '</td>' +
+      '<td class="wrap-cell">' + esc(truncate(r['职责与成果'], 90) || '—') + '</td>' +
+      '<td>' + (link ? '<a class="lnk" href="' + esc(link) + '" target="_blank" rel="noopener">链接</a>' : '—') + '</td>' +
+      '<td><button class="lnk" data-edit="experiences" data-id="' + esc(r._id) + '">编辑</button></td></tr>';
+  }).join('') : '<tr><td colspan="9" style="text-align:center;padding:26px;color:var(--ink-3)">没有符合条件的经历</td></tr>';
+}
+
+function syncExpSelectionUI() {
+  var n = Object.keys(EXP_FILTERS.selected).filter(function (k) { return EXP_FILTERS.selected[k]; }).length;
+  $('#expSelCount').textContent = '已选 ' + n + ' 条';
+  $('#expBulkDelete').disabled = n === 0;
+  var rows = filteredExperiences();
+  $('#expSelectAll').checked = rows.length > 0 && rows.every(function (r) { return EXP_FILTERS.selected[r._id]; });
+}
+
+/* ============================================================
+   渲染：现在
+   ============================================================ */
+var OPP_FILTERS = { type: '', status: '', scope: '', q: '', selected: {} };
+
+function filteredOpportunities() {
+  var q = OPP_FILTERS.q.toLowerCase();
+  return STORE.data.opportunities.filter(function (r) {
+    if (OPP_FILTERS.type && r['类型'] !== OPP_FILTERS.type) return false;
+    if (OPP_FILTERS.status && r['状态'] !== OPP_FILTERS.status) return false;
+    if (OPP_FILTERS.scope === 'official' && !isOfficial(r)) return false;
+    if (OPP_FILTERS.scope === 'mine' && !isPlanned(r)) return false;
+    if (OPP_FILTERS.scope === 'custom' && isOfficial(r)) return false;
+    if (q) {
+      var blob = [r['名称'], r['来源'], r['活动信息'], r['类型'], r['状态'], linkOf(r['链接'])].join(' ').toLowerCase();
+      if (blob.indexOf(q) === -1) return false;
+    }
+    return true;
+  }).sort(function (a, b) {
+    // 排序：未来的截止优先（越近越前），其次无日期，最后是已过期的（越近越前）。
+    // 这样表格顶部永远是「接下来要做的事」，而不是一堆早就过期的节点。
+    var da = daysUntil(firstDate(a['截止时间'], a['活动日期']));
+    var db = daysUntil(firstDate(b['截止时间'], b['活动日期']));
+    var ra = da === null ? 1 : da < 0 ? 2 : 0;
+    var rb = db === null ? 1 : db < 0 ? 2 : 0;
+    if (ra !== rb) return ra - rb;
+    if (ra === 2) return db - da;          // 已过期：最近的在前
+    return (da === null ? 0 : da) - (db === null ? 0 : db);
+  });
+}
+
+function renderNowStats() {
+  var all = STORE.data.opportunities;
+  var soon = all.filter(function (r) {
+    var d = daysUntil(r['截止时间']);
+    return d !== null && d >= 0 && d <= 7;
+  }).length;
+  $('#nowStats').innerHTML = [
+    ['机会总数', all.length, ''],
+    ['公开日程', all.filter(isOfficial).length, 'blue'],
+    ['我的清单', all.filter(isPlanned).length, 'gold'],
+    ['7 天内截止', soon, 'gold'],
+    ['已报名', all.filter(function (r) { return r['状态'] === '已报名'; }).length, ''],
+    ['自建机会', all.filter(function (r) { return !isOfficial(r); }).length, '']
+  ].map(function (s) {
+    return '<div class="stat ' + s[2] + '"><b>' + esc(s[1]) + '</b><small>' + esc(s[0]) + '</small></div>';
+  }).join('');
+}
+
+function oppRowHTML(r) {
+  var sample = isSample(r);
+  var nm = String(r['名称'] || '').replace(' · ' + MARK, '');
+  var d = daysUntil(r['截止时间']);
+  var dd = d === null ? '' : (d < 0 ? '<span style="color:var(--ink-3)">' + esc(deltaText(d)) + '</span>'
+    : d <= 7 ? '<span style="color:var(--coral);font-weight:700">' + esc(deltaText(d)) + '</span>'
+    : '<span style="color:var(--ink-2)">' + esc(deltaText(d)) + '</span>');
+  var link = linkOf(r['链接']);
+  return '<tr' + (sample ? ' class="is-sample"' : '') + '>' +
+    '<td class="row-sel"><input type="checkbox" class="ck" data-opp-sel="' + esc(r._id) + '"' + (OPP_FILTERS.selected[r._id] ? ' checked' : '') + '></td>' +
+    '<td class="wrap-cell"><b>' + esc(nm) + '</b>' +
+    (isOfficial(r) ? ' <span class="t-tag blue" style="background:#eaf1f6;color:var(--blue)">公开日程</span>' : '') +
+    (sample ? ' <span class="t-tag sample">示例</span>' : '') +
+    (r['活动信息'] ? '<div style="font-size:12px;color:var(--ink-3);margin-top:4px">' + esc(truncate(r['活动信息'], 74)) + '</div>' : '') + '</td>' +
+    '<td><span class="t-tag">' + esc(r['类型'] || '') + '</span></td>' +
+    '<td><span class="t-tag ' + (r['重要程度'] === '高' ? 'high' : r['重要程度'] === '中' ? 'mid' : 'low') + '">' + esc(r['重要程度'] || '—') + '</span></td>' +
+    '<td style="white-space:nowrap">' + esc(r['状态'] || '') + '</td>' +
+    '<td class="wrap-cell">' + esc(r['来源'] || '') + '</td>' +
+    '<td style="white-space:nowrap">' + esc(normDate(r['截止时间']) || '—') + '</td>' +
+    '<td style="white-space:nowrap">' + esc([normDate(r['活动日期']), normDate(r['活动结束日期'])].filter(Boolean).join(' → ') || '—') + '</td>' +
+    '<td style="white-space:nowrap">' + dd + '</td>' +
+    '<td>' + (isPlanned(r) ? '<button class="btn ghost sm" data-unplan="' + esc(r._id) + '">已加入 ✓</button>'
+      : '<button class="btn ghost sm" data-plan="' + esc(r._id) + '">加入</button>') + '</td>' +
+    '<td style="white-space:nowrap">' +
+    (link ? '<a class="lnk" href="' + esc(link) + '" target="_blank" rel="noopener" title="' + esc(linkText(r['链接'])) + '">官方</a> ' : '') +
+    '<button class="lnk" data-edit="opportunities" data-id="' + esc(r._id) + '">编辑</button>' +
+    (isOfficial(r) ? '' : ' <button class="lnk del" data-del="opportunities" data-id="' + esc(r._id) + '">删除</button>') +
+    '</td></tr>';
+}
+
+function renderOppTable() {
+  var rows = filteredOpportunities();
+  $('#oppTable tbody').innerHTML = rows.length
+    ? rows.map(oppRowHTML).join('')
+    : '<tr><td colspan="11" style="text-align:center;padding:26px;color:var(--ink-3)">没有符合条件的机会</td></tr>';
+  $('#oppCount').textContent = '共 ' + rows.length + ' 条' +
+    (rows.length !== STORE.data.opportunities.length ? '（总 ' + STORE.data.opportunities.length + ' 条）' : '');
+}
+
+function syncOppSelectionUI() {
+  var n = Object.keys(OPP_FILTERS.selected).filter(function (k) { return OPP_FILTERS.selected[k]; }).length;
+  $('#oppSelCount').textContent = '已选 ' + n + ' 条';
+  ['oppBulkPlan', 'oppBulkUnplan', 'oppBulkStatus', 'oppBulkDelete'].forEach(function (id) {
+    $('#' + id).disabled = n === 0;
+  });
+  var rows = filteredOpportunities();
+  var ck = rows.length > 0 && rows.every(function (r) { return OPP_FILTERS.selected[r._id]; });
+  $('#oppSelectAll').checked = ck;
+  $('#oppHeadCk').checked = ck;
+}
+
+function renderCountdown() {
+  var rows = STORE.data.opportunities.map(function (r) { return { r: r, d: daysUntil(r['截止时间']) }; })
+    .filter(function (x) { return x.d !== null && x.d >= 0 && x.r['状态'] !== '已参加' && x.r['状态'] !== '已放弃'; })
+    .sort(function (a, b) { return a.d - b.d; }).slice(0, 10);
+
+  $('#countdownList').innerHTML = rows.length ? rows.map(function (x) {
+    var r = x.r;
+    var nm = String(r['名称'] || '').replace(' · ' + MARK, '');
+    var urgent = x.d <= 7;
+    return '<div class="item"><div class="when"><b style="color:' + (urgent ? 'var(--coral)' : 'var(--deep)') + '">' + x.d + '</b>' +
+      '<small>' + (x.d === 0 ? '今天' : '天后') + '</small></div>' +
+      '<div class="body"><div class="t">' + esc(nm) + '</div>' +
+      '<div class="d">截止 ' + esc(normDate(r['截止时间'])) + ' · ' + esc(r['类型'] || '') + ' · ' + esc(r['来源'] || '') + '</div></div>' +
+      '<div class="right">' + (isPlanned(r)
+        ? '<span class="t-tag on">已加入</span>'
+        : '<button class="btn ghost sm" data-plan="' + esc(r._id) + '">加入个人清单</button>') + '</div></div>';
+  }).join('') : '<div class="empty"><span class="big">✓</span>暂时没有待处理的报名截止</div>';
+}
+
+function renderOfficialCalendar() {
+  var rows = STORE.data.opportunities.filter(isOfficial);
+  $('#officialNote').innerHTML = '预置 <b>' + rows.length + '</b> 项公开日程（名称、日期、来源、官方链接、报名说明）。' +
+    '报名与赛程时间以官方通知为准；「加入个人清单」只是把它放进你的时间地图，不会修改公开日程本身。';
+  $('#officialGrid').innerHTML = rows.map(function (r) {
+    var link = linkOf(r['链接']);
+    var d = daysUntil(r['截止时间']);
+    return '<div class="dir-card i-' + (r['重要程度'] === '高' ? 'high' : r['重要程度'] === '中' ? 'mid' : 'low') + '">' +
+      '<h3 style="font-size:14.5px">' + esc(r['名称']) + '</h3>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+      '<span class="t-tag">' + esc(r['类型']) + '</span>' +
+      '<span class="t-tag ' + (r['重要程度'] === '高' ? 'high' : r['重要程度'] === '中' ? 'mid' : 'low') + '">' + esc(r['重要程度']) + '</span>' +
+      (isPlanned(r) ? '<span class="t-tag on">已加入我的清单</span>' : '') + '</div>' +
+      '<dl>' +
+      '<div><dt>活动</dt><dd>' + esc([normDate(r['活动日期']), normDate(r['活动结束日期'])].filter(Boolean).join(' → ') || '待公布') + '</dd></div>' +
+      '<div><dt>报名截止</dt><dd>' + esc(normDate(r['截止时间']) || '以官方通知为准') +
+      (d !== null && d >= 0 ? ' <span style="color:var(--coral);font-weight:700">（' + esc(deltaText(d)) + '）</span>' : '') + '</dd></div>' +
+      '<div><dt>来源</dt><dd>' + esc(r['来源']) + '</dd></div>' +
+      '<div><dt>说明</dt><dd>' + esc(r['活动信息'] || '') + '</dd></div>' +
+      '</dl>' +
+      '<div class="foot">' +
+      (link ? '<a class="lnk" href="' + esc(link) + '" target="_blank" rel="noopener">官方链接 →</a>' : '') +
+      (isPlanned(r)
+        ? '<button class="btn ghost sm" data-unplan="' + esc(r._id) + '">移出我的清单</button>'
+        : '<button class="btn sm" data-plan="' + esc(r._id) + '">加入个人清单</button>') +
+      '</div></div>';
+  }).join('');
+}
+
+/* ============================================================
+   渲染：未来
+   ============================================================ */
+/** 去掉示例标记，用于跨表按名称匹配 */
+function bareName(v) {
+  return String(v === null || v === undefined ? '' : v)
+    .replace(new RegExp('\\s*·\\s*' + MARK, 'g'), '')
+    .replace(MARK, '')
+    .trim();
+}
+
+/**
+ * 取体验卡的已勾选步骤。
+ * 优先用 _checkedSteps（真实勾选记录，需与当前步骤签名一致）；
+ * 否则回退解析「步骤进度」的 n/total，把前 n 步视为已完成，
+ * 这样从数据表直接导入的进度也能正确显示。
+ */
+function checkedSteps(rec) {
+  var steps = parseSteps(rec['具体步骤']);
+  var sig = JSON.stringify(steps);
+  if (rec._stepSignature === sig && Array.isArray(rec._checkedSteps)) {
+    return rec._checkedSteps.filter(function (n) { return Number.isInteger(n) && n >= 0 && n < steps.length; });
+  }
+  var m = /^\s*(\d+)\s*\/\s*(\d+)\s*$/.exec(String(rec['步骤进度'] || ''));
+  if (m) {
+    var done = Math.min(Number(m[1]), steps.length);
+    var out = [];
+    for (var i = 0; i < done; i += 1) out.push(i);
+    return out;
+  }
+  return [];
+}
+function intentClass(v) {
+  return /非常感兴趣|感兴趣/.test(v || '') ? 'i-high' : /了解中|考虑中/.test(v || '') ? 'i-mid' : 'i-low';
+}
+
+var DIR_FILTER = { intent: '' };
+function renderDirWall() {
+  var rows = STORE.data.directions.filter(function (r) {
+    return !DIR_FILTER.intent || r['意向程度'] === DIR_FILTER.intent;
+  });
+  $('#dirWall').innerHTML = rows.length ? rows.map(function (r) {
+    var sample = isSample(r);
+    var nm = String(r['方向名称'] || '').replace(' · ' + MARK, '');
+    var rel = STORE.data.experiments.filter(function (x) { return bareName(x['关联方向']) === bareName(r['方向名称']); });
+    return '<div class="dir-card ' + intentClass(r['意向程度']) + '">' +
+      '<div style="display:flex;gap:7px;align-items:baseline;flex-wrap:wrap">' +
+      '<h3 style="flex:1">' + esc(nm) + '</h3>' +
+      (sample ? '<span class="t-tag sample">示例</span>' : '') + '</div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap"><span class="t-tag ' + (/非常感兴趣/.test(r['意向程度']) ? 'on' : 'mid') + '">' +
+      esc(r['意向程度'] || '未评估') + '</span>' +
+      '<span class="t-tag">' + rel.length + ' 张体验卡</span></div>' +
+      '<p class="intro">' + esc(r['一句话简介'] || '') + '</p>' +
+      '<dl>' +
+      '<div><dt>所需能力</dt><dd>' + esc(r['所需能力'] || '—') + '</dd></div>' +
+      '<div><dt>已有基础</dt><dd>' + esc(r['已有基础'] || '—') + '</dd></div>' +
+      '<div><dt>关键阶段</dt><dd>' + esc(r['关键阶段'] || '—') + '</dd></div>' +
+      '<div><dt>准备事项</dt><dd>' + esc(r['准备事项'] || '—') + '</dd></div>' +
+      '</dl>' +
+      '<div class="foot">' +
+      '<button class="btn ghost sm" data-xp-for="' + esc(r['方向名称']) + '">＋ 体验卡</button>' +
+      '<button class="lnk" data-edit="directions" data-id="' + esc(r._id) + '">编辑</button>' +
+      '<button class="lnk del" data-del="directions" data-id="' + esc(r._id) + '">删除</button>' +
+      '</div></div>';
+  }).join('') : '<div class="empty"><span class="big">◎</span>还没有候选方向<br><span style="font-size:12px">点右上角「新增方向」开始</span></div>';
+}
+
+var XP_FILTER = { status: '' };
+function renderXpWall() {
+  var rows = STORE.data.experiments.filter(function (r) {
+    return !XP_FILTER.status || (r['完成状态'] || '未开始') === XP_FILTER.status;
+  });
+  $('#xpWall').innerHTML = rows.length ? rows.map(function (r) {
+    var sample = isSample(r);
+    var nm = String(r['体验目标'] || '').replace(' · ' + MARK, '');
+    var steps = parseSteps(r['具体步骤']);
+    var done = checkedSteps(r);
+    var pct = steps.length ? Math.round(done.length / steps.length * 100) : 0;
+    return '<div class="xp-card' + (r['完成状态'] === '已完成' ? ' st-done' : '') + '">' +
+      '<div class="head"><span class="t">' + esc(nm) + '</span>' +
+      (sample ? '<span class="t-tag sample">示例</span>' : '') +
+      '<span class="t-tag ' + (r['完成状态'] === '已完成' ? 'on' : r['完成状态'] === '进行中' ? 'mid' : 'low') + '">' +
+      esc(r['完成状态'] || '未开始') + '</span></div>' +
+      '<div style="display:flex;gap:7px;flex-wrap:wrap;font-size:12px;color:var(--ink-3)">' +
+      '<span>方向：' + esc(r['关联方向'] || '未关联') + '</span><span>·</span><span>预计 ' + esc(r['预计时间'] || '待定') + '</span></div>' +
+      '<div class="steps">' + (steps.length ? steps.map(function (s, i) {
+        return '<label class="step' + (done.indexOf(i) !== -1 ? ' done' : '') + '">' +
+          '<input type="checkbox" data-step="' + esc(r._id) + '" data-idx="' + i + '"' + (done.indexOf(i) !== -1 ? ' checked' : '') + '>' +
+          '<span>' + esc(s) + '</span></label>';
+      }).join('') : '<div style="font-size:12.5px;color:var(--ink-3)">还没有步骤，点「编辑」补充</div>') + '</div>' +
+      '<div class="prog"><span>进度</span><span class="track"><i style="width:' + pct + '%"></i></span>' +
+      '<b style="color:var(--deep)">' + done.length + '/' + steps.length + '</b><span style="color:var(--ink-3)">（' + pct + '%）</span></div>' +
+      (r['体验反馈'] ? '<div class="fb">' + esc(r['体验反馈']) + '</div>' : '') +
+      '<div class="foot">' +
+      '<button class="btn ghost sm" data-feedback="' + esc(r._id) + '">✎ 记录体验反馈</button>' +
+      '<select class="chip" data-xp-status="' + esc(r._id) + '" style="padding:5px 9px;font-size:12px">' +
+      ['未开始', '进行中', '已完成', '搁置'].map(function (s) {
+        return '<option' + ((r['完成状态'] || '未开始') === s ? ' selected' : '') + '>' + s + '</option>';
+      }).join('') + '</select>' +
+      '<button class="lnk" data-edit="experiments" data-id="' + esc(r._id) + '">编辑</button>' +
+      '<button class="lnk del" data-del="experiments" data-id="' + esc(r._id) + '">删除</button>' +
+      '</div></div>';
+  }).join('') : '<div class="empty"><span class="big">◈</span>没有符合状态的体验卡</div>';
+}
+
+function renderMajorWall() {
+  $('#majorWall').innerHTML = STORE.data.major.map(function (r) {
+    var sample = isSample(r);
+    var nm = String(r['专业名称'] || '').replace(' · ' + MARK, '');
+    return '<div class="dir-card ' + (/已体验|深入了解|比较了解/.test(r['了解程度']) ? 'i-high' : /初步了解/.test(r['了解程度']) ? 'i-mid' : 'i-low') + '">' +
+      '<div style="display:flex;gap:7px;align-items:baseline;flex-wrap:wrap"><h3 style="flex:1">' + esc(nm) + '</h3>' +
+      (sample ? '<span class="t-tag sample">示例</span>' : '') + '</div>' +
+      '<div><span class="t-tag ' + (/已体验|深入了解/.test(r['了解程度']) ? 'on' : 'mid') + '">' + esc(r['了解程度'] || '未了解') + '</span></div>' +
+      '<dl>' +
+      '<div><dt>学习内容</dt><dd>' + esc(r['学习内容'] || '—') + '</dd></div>' +
+      '<div><dt>相关职业</dt><dd>' + esc(r['相关职业'] || '—') + '</dd></div>' +
+      '<div><dt>核心能力</dt><dd>' + esc(r['核心能力'] || '—') + '</dd></div>' +
+      '<div><dt>相邻领域</dt><dd>' + esc(r['相邻领域'] || '—') + '</dd></div>' +
+      '<div><dt>体验建议</dt><dd>' + esc(r['体验建议'] || '—') + '</dd></div>' +
+      '</dl>' +
+      '<div class="foot"><button class="lnk" data-edit="major" data-id="' + esc(r._id) + '">编辑</button>' +
+      '<button class="lnk del" data-del="major" data-id="' + esc(r._id) + '">删除</button></div></div>';
+  }).join('');
+}
+
+/* ============================================================
+   表单
+   ============================================================ */
+var FORM = { key: null, id: null, props: [] };
+
+function fieldHTML(p, rec) {
+  var v = rec ? rec[p.name] : '';
+  var id = 'f_' + p.name;
+  var label = '<label for="' + id + '">' + esc(p.name) + '<span class="type">' + esc(p.type) + '</span></label>';
+  if (p.type === 'select') {
+    var opts = (p.config && p.config.options) || [];
+    return '<div class="field">' + label + '<select id="' + id + '" data-f="' + esc(p.name) + '">' +
+      '<option value="">— 请选择 —</option>' +
+      opts.map(function (o) {
+        var t = typeof o === 'string' ? o : o.text;
+        return '<option value="' + esc(t) + '"' + (v === t ? ' selected' : '') + '>' + esc(t) + '</option>';
+      }).join('') + '</select></div>';
+  }
+  if (p.type === 'multi_select') {
+    var mopts = (p.config && p.config.options) || [];
+    var cur = Array.isArray(v) ? v : [];
+    return '<div class="field">' + label + '<div class="multi" data-multi="' + esc(p.name) + '">' +
+      mopts.map(function (o) {
+        var t = typeof o === 'string' ? o : o.text;
+        var on = cur.indexOf(t) !== -1;
+        return '<label class="' + (on ? 'on' : '') + '"><input type="checkbox" value="' + esc(t) + '"' + (on ? ' checked' : '') + '>' + esc(t) + '</label>';
+      }).join('') + '</div></div>';
+  }
+  if (p.type === 'date') {
+    var dv = normDate(v);
+    return '<div class="field">' + label + '<input id="' + id + '" type="date" value="' + esc(dv) + '" data-f="' + esc(p.name) + '"></div>';
+  }
+  if (p.type === 'url') {
+    var u = v && typeof v === 'object' ? v.link : v;
+    return '<div class="field">' + label + '<input id="' + id + '" type="url" placeholder="https://…" value="' + esc(u || '') + '" data-f="' + esc(p.name) + '"></div>';
+  }
+  var isLong = /职责|成果|具体步骤|活动信息|说明|简介|困惑|内容|职业|能力|领域|建议|事项|阶段|基础|反馈|方向|目标|兴趣/.test(p.name);
+  if (isLong) {
+    return '<div class="field">' + label + '<textarea id="' + id + '" data-f="' + esc(p.name) + '" placeholder="' +
+      (p.name === '具体步骤' ? '每行一个步骤，或用分号分隔' : '') + '">' + esc(v || '') + '</textarea>' +
+      (p.name === '具体步骤' ? '<div class="hint">按行拆分，前端会渲染成可勾选的步骤清单，并自动汇总进度。</div>' : '') + '</div>';
+  }
+  return '<div class="field">' + label + '<input id="' + id + '" type="text" value="' + esc(v || '') + '" data-f="' + esc(p.name) + '"></div>';
+}
+
+function openForm(key, id, preset) {
+  var props = tableProps(key);
+  var rec = id ? STORE.data[key].filter(function (r) { return r._id === id; })[0] : null;
+  if (!rec && preset) rec = preset;
+  FORM = { key: key, id: id, props: props };
+  $('#formTitle').textContent = (id ? '编辑' : '新增') + TABLE_LABEL[key];
+  var body = props.map(function (p) { return fieldHTML(p, rec); }).join('');
+  if (key === 'profile') {
+    body += '<div class="note">「地图阶段」用于顶部学位阶段（本科生 / 硕士生 / 博士生）的显示，由左上角切换按钮维护。</div>';
+  }
+  $('#formBody').innerHTML = body;
+  $('#formOverlay').classList.remove('hidden');
+}
+function closeForm() { $('#formOverlay').classList.add('hidden'); }
+
+function collectForm() {
+  var out = {};
+  $$('#formBody [data-f]').forEach(function (el) { out[el.getAttribute('data-f')] = el.value; });
+  $$('#formBody [data-multi]').forEach(function (box) {
+    var name = box.getAttribute('data-multi');
+    out[name] = $$('input[type=checkbox]', box).filter(function (c) { return c.checked; }).map(function (c) { return c.value; });
+  });
+  // url 字段转成 {link,text}
+  FORM.props.forEach(function (p) {
+    if (p.type === 'url') {
+      var v = out[p.name];
+      out[p.name] = v ? { link: v, text: v } : null;
+    }
+  });
+  return out;
+}
+
+/* ---------------- 事件绑定 ---------------- */
+function bind() {
+  /* 顶部导航 */
+  $('#tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-view]');
+    if (!b) return;
+    $$('#tabs button').forEach(function (x) { x.classList.toggle('active', x === b); });
+    var v = b.getAttribute('data-view');
+    $$('.view').forEach(function (s) { s.classList.toggle('active', s.id === 'view-' + v); });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (v === 'now') renderNowCalendar();
+    if (v === 'future') { renderDirWall(); renderXpWall(); renderMajorWall(); }
+    if (v === 'overview') renderStarMap();
+    syncTabGlider();
+    playEntrance($('#view-' + v));
+  });
+  document.addEventListener('click', function (e) {
+    var g = e.target.closest('[data-goto]');
+    if (g) { $('[data-view="' + g.getAttribute('data-goto') + '"]').click(); }
+  });
+
+  /* 学位阶段 */
+  $('#degreeSwitch').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-degree]');
+    if (!b) return;
+    var degree = b.getAttribute('data-degree');
+    var p = currentProfile();
+    var st = p ? profileStage(p) : { degree: 'bachelor', positions: {}, profileGrade: '' };
+    st.degree = degree;
+    var payload = { 地图阶段: JSON.stringify(st) };
+    if (!p) {
+      payload['年级'] = degree === 'bachelor' ? '大一' : degree === 'master' ? '研一' : '博一';
+      payload['填写日期'] = todayISO();
+      dbAdd('profile', payload).then(function () { return reload(); });
+    } else {
+      dbUpdate('profile', p._id, payload).then(function () { return reload(); });
+    }
+    toast('已切换为' + (STAGES.filter(function (s) { return s.key === degree; })[0] || {}).label);
+  });
+
+  /* 档案 */
+  $('#editProfileBtn').addEventListener('click', function () {
+    var p = currentProfile();
+    if (p) openForm('profile', p._id);
+    else openForm('profile', null, { '填写日期': todayISO(), '地图阶段': JSON.stringify({ degree: 'bachelor', positions: { bachelor: 0, master: 0, doctor: 0 }, profileGrade: '' }) });
+  });
+
+  /* 统计预览开关 */
+  $('#includeSampleStats').addEventListener('change', renderCapability);
+
+  /* 星图点击 → 跳到未来并高亮 */
+  $('#starMap').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-dir]');
+    if (!b) return;
+    $('[data-view="future"]').click();
+    var id = b.getAttribute('data-dir');
+    setTimeout(function () {
+      var el = $('[data-edit="directions"][data-id="' + id + '"]');
+      if (el) {
+        var card = el.closest('.dir-card');
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.style.outline = '2px solid var(--green)';
+        setTimeout(function () { card.style.outline = ''; }, 1800);
+      }
+    }, 260);
+  });
+
+  /* 过去：筛选 */
+  var tf = $('#expTypeFilter'), sf = $('#expStatusFilter');
+  optionsOf('experiences', '类型').forEach(function (o) { tf.insertAdjacentHTML('beforeend', '<option>' + esc(o) + '</option>'); });
+  optionsOf('experiences', '状态').forEach(function (o) { sf.insertAdjacentHTML('beforeend', '<option>' + esc(o) + '</option>'); });
+  tf.addEventListener('change', function () { EXP_FILTERS.type = tf.value; renderTimeline(); renderEvidenceTable(); syncExpSelectionUI(); });
+  sf.addEventListener('change', function () { EXP_FILTERS.status = sf.value; renderTimeline(); renderEvidenceTable(); syncExpSelectionUI(); });
+  var expTimer;
+  $('#expSearch').addEventListener('input', function (e) {
+    clearTimeout(expTimer);
+    var v = e.target.value;
+    expTimer = setTimeout(function () { EXP_FILTERS.q = v; renderTimeline(); renderEvidenceTable(); syncExpSelectionUI(); }, 160);
+  });
+
+  /* 过去：选择与批量 */
+  function onExpSel(e) {
+    var c = e.target.closest('[data-exp-sel]');
+    if (!c) return;
+    EXP_FILTERS.selected[c.getAttribute('data-exp-sel')] = c.checked;
+    syncExpSelectionUI();
+  }
+  $('#timeline').addEventListener('change', onExpSel);
+  $('#expSelectAll').addEventListener('change', function (e) {
+    filteredExperiences().forEach(function (r) { EXP_FILTERS.selected[r._id] = e.target.checked; });
+    renderTimeline(); syncExpSelectionUI();
+  });
+  $('#expClearSel').addEventListener('click', function () {
+    EXP_FILTERS.selected = {}; renderTimeline(); syncExpSelectionUI();
+  });
+  $('#expBulkDelete').addEventListener('click', function () {
+    var ids = Object.keys(EXP_FILTERS.selected).filter(function (k) { return EXP_FILTERS.selected[k]; });
+    if (!ids.length) return;
+    if (!confirm('确认删除所选 ' + ids.length + ' 条经历？删除后可以撤销恢复。')) return;
+    dbBulkDelete('experiences', ids).then(function (removed) {
+      EXP_FILTERS.selected = {};
+      return reload().then(function () {
+        toast('已删除 ' + removed.length + ' 条经历', '', '撤销恢复', function () {
+          dbRestore('experiences', removed).then(function (n) {
+            toast('已恢复 ' + n + ' 条经历');
+            reload();
+          });
+        });
+      });
+    });
+  });
+  /* 单条删除也支持撤销 */
+  var lastDeleted = null;
+  $('#expUndo').addEventListener('click', function () {
+    if (!lastDeleted) return;
+    dbRestore('experiences', lastDeleted).then(function (n) { toast('已恢复 ' + n + ' 条'); lastDeleted = null; reload(); });
+  });
+  window.__setLastDeleted = function (rec) { lastDeleted = [rec]; $('#expUndo').disabled = false; };
+
+  /* 新增经历 / 机会 / 方向 / 体验卡 / 专业 */
+  $('#addExpBtn').addEventListener('click', function () { openForm('experiences'); });
+  $('#addOppBtn').addEventListener('click', function () { openForm('opportunities'); });
+  $('#addDirBtn').addEventListener('click', function () { openForm('directions'); });
+  $('#addXpBtn').addEventListener('click', function () { openForm('experiments'); });
+  $('#addMajorBtn').addEventListener('click', function () { openForm('major'); });
+
+  /* 现在：筛选 */
+  var otf = $('#oppTypeFilter'), osf = $('#oppStatusFilter');
+  optionsOf('opportunities', '类型').forEach(function (o) { otf.insertAdjacentHTML('beforeend', '<option>' + esc(o) + '</option>'); });
+  optionsOf('opportunities', '状态').forEach(function (o) { osf.insertAdjacentHTML('beforeend', '<option>' + esc(o) + '</option>'); });
+  function oppRefresh() { renderOppTable(); syncOppSelectionUI(); }
+  otf.addEventListener('change', function () { OPP_FILTERS.type = otf.value; oppRefresh(); });
+  osf.addEventListener('change', function () { OPP_FILTERS.status = osf.value; oppRefresh(); });
+  $('#oppScopeFilter').addEventListener('change', function (e) { OPP_FILTERS.scope = e.target.value; oppRefresh(); });
+  var oppTimer;
+  $('#oppSearch').addEventListener('input', function (e) {
+    clearTimeout(oppTimer);
+    var v = e.target.value;
+    oppTimer = setTimeout(function () { OPP_FILTERS.q = v; oppRefresh(); }, 160);
+  });
+
+  function onOppSel(e) {
+    var c = e.target.closest('[data-opp-sel]');
+    if (!c) return;
+    OPP_FILTERS.selected[c.getAttribute('data-opp-sel')] = c.checked;
+    syncOppSelectionUI();
+  }
+  $('#oppTable').addEventListener('change', onOppSel);
+  function selectAllOpps(checked) {
+    filteredOpportunities().forEach(function (r) { OPP_FILTERS.selected[r._id] = checked; });
+    renderOppTable(); syncOppSelectionUI();
+  }
+  $('#oppSelectAll').addEventListener('change', function (e) { selectAllOpps(e.target.checked); });
+  $('#oppHeadCk').addEventListener('change', function (e) { selectAllOpps(e.target.checked); });
+  $('#oppClearSel').addEventListener('click', function () {
+    OPP_FILTERS.selected = {}; renderOppTable(); syncOppSelectionUI();
+  });
+
+  function selIds() { return Object.keys(OPP_FILTERS.selected).filter(function (k) { return OPP_FILTERS.selected[k]; }); }
+
+  /** 批量改字段：串行写入，遵守资料库 QPS 限制；在线走数据表，离线走本地存储 */
+  function bulkPatch(ids, props) {
+    busy(1);
+    var queue = ids.slice();
+    function step() {
+      if (!queue.length) { busy(-1); return Promise.resolve(); }
+      var id = queue.shift();
+      return dbUpdate('opportunities', id, props)
+        .catch(function () {})
+        .then(step);
+    }
+    return step();
+  }
+
+  $('#oppBulkPlan').addEventListener('click', function () {
+    var ids = selIds(); if (!ids.length) return;
+    bulkPatch(ids, { 安排选择: 'planned' }).then(function () {
+      OPP_FILTERS.selected = {};
+      toast('已把 ' + ids.length + ' 项加入我的清单');
+      return reload();
+    }).catch(function (e) { toast('失败：' + e.message, 'err'); });
+  });
+  $('#oppBulkUnplan').addEventListener('click', function () {
+    var ids = selIds(); if (!ids.length) return;
+    bulkPatch(ids, { 安排选择: '' }).then(function () {
+      OPP_FILTERS.selected = {};
+      toast('已移出 ' + ids.length + ' 项');
+      return reload();
+    }).catch(function (e) { toast('失败：' + e.message, 'err'); });
+  });
+  $('#oppBulkStatus').addEventListener('click', function () {
+    var ids = selIds(); if (!ids.length) return;
+    var opts = optionsOf('opportunities', '状态');
+    var v = prompt('把所选 ' + ids.length + ' 项的状态改为：\n' + opts.map(function (o, i) { return (i + 1) + '. ' + o; }).join('\n'), '准备中');
+    if (!v) return;
+    var target = /^\d+$/.test(v.trim()) ? opts[Number(v.trim()) - 1] : v.trim();
+    if (!target) return;
+    bulkPatch(ids, { 状态: target }).then(function () {
+      OPP_FILTERS.selected = {};
+      toast('已更新 ' + ids.length + ' 项状态为「' + target + '」');
+      return reload();
+    }).catch(function (e) { toast('失败：' + e.message, 'err'); });
+  });
+  $('#oppBulkDelete').addEventListener('click', function () {
+    var ids = selIds(); if (!ids.length) return;
+    if (!confirm('确认删除所选 ' + ids.length + ' 项机会？')) return;
+    dbBulkDelete('opportunities', ids).then(function (removed) {
+      OPP_FILTERS.selected = {};
+      return reload().then(function () {
+        toast('已删除 ' + removed.length + ' 项', '', '撤销恢复', function () {
+          dbRestore('opportunities', removed).then(function (n) { toast('已恢复 ' + n + ' 项'); reload(); });
+        });
+      });
+    });
+  });
+
+  /* 加入 / 移出我的清单（事件委托，覆盖表格、倒计时、日历详情、公开日程卡片） */
+  document.addEventListener('click', function (e) {
+    var p = e.target.closest('[data-plan]');
+    var u = e.target.closest('[data-unplan]');
+    if (p || u) {
+      var id = (p || u).getAttribute(p ? 'data-plan' : 'data-unplan');
+      var val = p ? 'planned' : '';
+      var rec = STORE.data.opportunities.filter(function (r) { return r._id === id; })[0];
+      if (!rec) return;
+      dbUpdate('opportunities', id, { 安排选择: val })
+        .then(function () { toast(p ? '已加入个人清单' : '已移出我的清单'); return reload(); })
+        .catch(function (err) { toast('操作失败：' + err.message, 'err'); });
+    }
+  });
+
+  /* 日历 */
+  document.addEventListener('click', function (e) {
+    var nav = e.target.closest('[data-cal]');
+    if (nav) {
+      var d = Number(nav.getAttribute('data-cal'));
+      if (d === 0) { CAL.y = new Date().getFullYear(); CAL.m = new Date().getMonth(); }
+      else {
+        CAL.m += d;
+        if (CAL.m < 0) { CAL.m = 11; CAL.y -= 1; }
+        if (CAL.m > 11) { CAL.m = 0; CAL.y += 1; }
+      }
+      renderOverviewCalendar(); renderNowCalendar();
+      return;
+    }
+    var dayBtn = e.target.closest('[data-day]');
+    if (dayBtn) {
+      CAL.day = dayBtn.getAttribute('data-day');
+      renderOverviewCalendar(); renderNowCalendar();
+    }
+  });
+  $('#calMineOnly').addEventListener('change', function () { renderOverviewCalendar(); renderNowCalendar(); });
+
+  /* ICS */
+  function openIcs(summary) {
+    var rows = exportRows();
+    var mine = rows.filter(isPlanned).length;
+    var off = rows.filter(isOfficial).length;
+    $('#icsSummary').innerHTML = '当前可导出 <b>' + rows.length + '</b> 个时间节点（公开日程 <b>' + off + '</b> 项，已加入我的清单 <b>' + mine + '</b> 项）。' +
+      (summary || '');
+    $('#calOverlay').classList.remove('hidden');
+  }
+  $('#icsBtn').addEventListener('click', function () { openIcs(''); });
+  $('#officialIcsBtn').addEventListener('click', function () {
+    $('#icsScope').value = 'true|false';
+    openIcs('已默认选择「仅公开日程」。');
+  });
+  $('#calClose').addEventListener('click', function () { $('#calOverlay').classList.add('hidden'); });
+  $('#icsCancel').addEventListener('click', function () { $('#calOverlay').classList.add('hidden'); });
+  $('#icsDownload').addEventListener('click', function () {
+    var parts = $('#icsScope').value.split('|');
+    var rows = exportRows();
+    var ics = buildCalendarICS(rows, $('#icsReminder').value,
+      parts[0] === 'true', parts[1] === 'true');
+    // 纯前端生成 Blob 下载，无需服务端
+    var blob = new Blob(['﻿' + ics], { type: 'text/calendar;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '大学成长地图-考试竞赛日历.ics';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    toast('日历文件已开始下载，用系统日历应用打开即可导入');
+    $('#calOverlay').classList.add('hidden');
+  });
+
+  /* 未来：筛选 */
+  optionsOf('directions', '意向程度').forEach(function (o) { $('#dirIntentFilter').insertAdjacentHTML('beforeend', '<option>' + esc(o) + '</option>'); });
+  $('#dirIntentFilter').addEventListener('change', function (e) { DIR_FILTER.intent = e.target.value; renderDirWall(); });
+  ['未开始', '进行中', '已完成', '搁置'].forEach(function (s) { $('#xpStatusFilter').insertAdjacentHTML('beforeend', '<option>' + esc(s) + '</option>'); });
+  $('#xpStatusFilter').addEventListener('change', function (e) { XP_FILTER.status = e.target.value; renderXpWall(); });
+
+  /* 体验卡：勾选步骤 */
+  $('#xpWall').addEventListener('change', function (e) {
+    var c = e.target.closest('[data-step]');
+    if (!c) return;
+    var id = c.getAttribute('data-step');
+    var idx = Number(c.getAttribute('data-idx'));
+    var rec = STORE.data.experiments.filter(function (r) { return r._id === id; })[0];
+    if (!rec) return;
+    var steps = parseSteps(rec['具体步骤']);
+    var done = checkedSteps(rec);
+    var i = done.indexOf(idx);
+    if (i === -1) done.push(idx); else done.splice(i, 1);
+    done.sort(function (a, b) { return a - b; });
+    var patch = {
+      _stepSignature: JSON.stringify(steps),
+      _checkedSteps: done,
+      步骤进度: done.length + '/' + steps.length
+    };
+    if (done.length === steps.length && steps.length) patch['完成状态'] = '已完成';
+    else if (done.length > 0 && rec['完成状态'] === '已完成') patch['完成状态'] = '进行中';
+    else if (done.length > 0 && !rec['完成状态']) patch['完成状态'] = '进行中';
+    dbUpdate('experiments', id, patch).then(function () {
+      var card = c.closest('.xp-card');
+      if (card) {
+        var pct2 = steps.length ? Math.round(done.length / steps.length * 100) : 0;
+        var track = card.querySelector('.prog .track i');
+        if (track) track.style.width = pct2 + '%';
+        var num = card.querySelector('.prog b');
+        if (num) num.textContent = done.length + '/' + steps.length;
+        var pSpans = card.querySelectorAll('.prog > span');
+        if (pSpans.length) pSpans[pSpans.length - 1].textContent = '（' + pct2 + '%）';
+        var lab = c.closest('.step');
+        if (lab) lab.classList.toggle('done', c.checked);
+        var st = patch['完成状态'] || rec['完成状态'] || '未开始';
+        var tag = card.querySelector('.head .t-tag:not(.sample)');
+        if (tag) { tag.className = 't-tag ' + (st === '已完成' ? 'on' : st === '进行中' ? 'mid' : 'low'); tag.textContent = st; }
+        var sel = card.querySelector('[data-xp-status]');
+        if (sel) sel.value = st;
+        card.classList.toggle('st-done', st === '已完成');
+        if (!REDUCED) { card.classList.remove('pop'); void card.offsetWidth; card.classList.add('pop'); }
+      }
+      renderAll(true);
+    });
+  });
+  $('#xpWall').addEventListener('change', function (e) {
+    var s = e.target.closest('[data-xp-status]');
+    if (!s) return;
+    dbUpdate('experiments', s.getAttribute('data-xp-status'), { 完成状态: s.value }).then(function () { return reload(); });
+  });
+  $('#xpWall').addEventListener('click', function (e) {
+    var fb = e.target.closest('[data-feedback]');
+    if (!fb) return;
+    var id = fb.getAttribute('data-feedback');
+    var rec = STORE.data.experiments.filter(function (r) { return r._id === id; })[0];
+    var v = prompt('记录这次体验的真实反馈（可以写：哪一步最有收获、哪里卡住、还想不想继续）：', rec['体验反馈'] || '');
+    if (v === null || v === undefined) return;
+    dbUpdate('experiments', id, { 体验反馈: v }).then(function () { toast('反馈已保存'); return reload(); });
+  });
+  $('#dirWall').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-xp-for]');
+    if (!b) return;
+    openForm('experiments', null, { '关联方向': b.getAttribute('data-xp-for'), '完成状态': '未开始' });
+  });
+
+  /* 通用：编辑 / 删除（事件委托） */
+  document.addEventListener('click', function (e) {
+    var ed = e.target.closest('[data-edit]');
+    if (ed) { openForm(ed.getAttribute('data-edit'), ed.getAttribute('data-id')); return; }
+    var dl = e.target.closest('[data-del]');
+    if (dl) {
+      var key = dl.getAttribute('data-del'), id = dl.getAttribute('data-id');
+      var rec = STORE.data[key].filter(function (r) { return r._id === id; })[0];
+      if (!confirm('确认删除这条记录？')) return;
+      dbDelete(key, id).then(function () {
+        return reload().then(function () {
+          if (key === 'experiences' && rec) {
+            toast('已删除 1 条经历', '', '撤销恢复', function () {
+              dbRestore('experiences', [rec]).then(function () { toast('已恢复'); reload(); });
+            });
+          } else toast('已删除');
+        });
+      });
+    }
+  });
+
+  /* 表单 */
+  $('#formClose').addEventListener('click', closeForm);
+  $('#formCancel').addEventListener('click', closeForm);
+  $('#formOverlay').addEventListener('click', function (e) { if (e.target === $('#formOverlay')) closeForm(); });
+  $('#formBody').addEventListener('change', function (e) {
+    var c = e.target.closest('.multi input');
+    if (c) c.closest('label').classList.toggle('on', c.checked);
+  });
+  $('#formSave').addEventListener('click', function () {
+    var props = collectForm();
+    var p = FORM.id ? dbUpdate(FORM.key, FORM.id, props) : dbAdd(FORM.key, props);
+    p.then(function () {
+      closeForm();
+      toast(FORM.id ? '已保存修改' : '已新增记录');
+      return reload();
+    }).catch(function () {});
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { closeForm(); $('#calOverlay').classList.add('hidden'); $('#dataOverlay').classList.add('hidden'); }
+  });
+
+  /* 星图依赖容器实测尺寸，窗口变化时重算 */
+  var starTimer;
+  window.addEventListener('resize', function () {
+    syncTabGlider();
+    clearTimeout(starTimer);
+    starTimer = setTimeout(function () {
+      if ($('#view-overview').classList.contains('active')) renderStarMap();
+    }, 180);
+  });
+}
+
+/* ---------------- 总渲染 ---------------- */
+function renderAll(skipXp) {
+  renderHero();
+  renderCapability();
+  renderStarMap();
+  renderFocus();
+  renderPastStats();
+  renderTimeline();
+  renderEvidenceTable();
+  syncExpSelectionUI();
+  renderNowStats();
+  renderOppTable();
+  syncOppSelectionUI();
+  renderCountdown();
+  renderOfficialCalendar();
+  renderOverviewCalendar();
+  renderNowCalendar();
+  renderDirWall();
+  if (!skipXp) renderXpWall();
+  renderMajorWall();
+}
+
+/** 重新拉取数据表并重绘（写入成功后调用） */
+/* ---------------- ICS 日历导出（纯前端生成，无需服务端） ---------------- */
+/* ICS —— 纯前端生成，无需服务端 */
+/** 导出候选：未过期、且未标记「已参加 / 已放弃」的机会 */
+function exportRows() {
+  return STORE.data.opportunities.filter(function (r) {
+    return r['状态'] !== '已参加' && r['状态'] !== '已放弃';
+  });
+}
+function icsEscape(value) {
+  return String(value === null || value === undefined ? '' : value)
+    .replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,')
+    .replace(/\r?\n/g, '\\n');
+}
+/** RFC 5545：按 UTF-8 字节 75 折行 */
+function foldCalendarLine(line) {
+  var enc = new TextEncoder();
+  var lines = [], part = '', len = 0;
+  Array.from(line).forEach(function (ch) {
+    var size = enc.encode(ch).length;
+    if (len + size > 75) { lines.push(part); part = ' '; len = 1; }
+    part += ch; len += size;
+  });
+  lines.push(part);
+  return lines.join('\r\n');
+}
+function isDateStr(s) { return /^\d{4}-\d{2}-\d{2}$/.test(String(s || '')); }
+function plusOneDay(dateStr) {
+  var p = dateStr.split('-').map(Number);
+  var dt = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+  dt.setUTCDate(dt.getUTCDate() + 1);
+  return dt.toISOString().slice(0, 10);
+}
+/** 稳定 UID：同一机会每次导出生成同一个 UID，避免导入手机日历产生重复项 */
+function stableUid(input) {
+  var h1 = 0x811c9dc5, h2 = 0x01000193, i;
+  var s = String(input);
+  for (i = 0; i < s.length; i++) {
+    h1 = ((h1 ^ s.charCodeAt(i)) * 16777619) >>> 0;
+    h2 = ((h2 + s.charCodeAt(i) * (i + 7)) * 2654435761) >>> 0;
+  }
+  var hex = (h1 >>> 0).toString(16) + (h2 >>> 0).toString(16);
+  while (hex.length < 24) hex += '0';
+  return hex.slice(0, 24);
+}
+/**
+ * 生成 ICS。同一条机会若既有「截止时间」又有「活动日期」，展开成两个 VEVENT：
+ * 截止节点落截止当天；活动日程落 活动日期→活动结束日期。
+ * 赛期超过 21 天的只落一个开始事件，避免手机日历出现横跨数月的长条。
+ * reminder: 'both' | 'week' | 'day' | 'none'
+ */
+function buildCalendarICS(rows, reminder, officialOnly, mineOnly) {
+  var stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  var out = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0',
+    'PRODID:-//College Growth Atlas//Calendar//CN',
+    'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'X-WR-CALNAME:大学成长地图', 'X-WR-TIMEZONE:Asia/Shanghai'
+  ];
+  var alarms = reminder === 'both' ? [7, 1] : reminder === 'week' ? [7] : reminder === 'day' ? [1] : [];
+  var MAX_SPAN_DAYS = 21;
+  var spanDays = function (a, b) {
+    return Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / 86400000);
+  };
+  var pushEvent = function (r, kind, start, end, uidSeed, note) {
+    var link = linkOf(r['链接']);
+    var descParts = [kind, note, r['类型'], r['来源'], r['活动信息'], link].filter(Boolean);
+    out.push('BEGIN:VEVENT',
+      'UID:' + stableUid(uidSeed) + '@college-growth-atlas',
+      'DTSTAMP:' + stamp,
+      'DTSTART;VALUE=DATE:' + start.replace(/-/g, ''),
+      'DTEND;VALUE=DATE:' + plusOneDay(end).replace(/-/g, ''),
+      'TRANSP:TRANSPARENT',
+      'SUMMARY:' + icsEscape(r['名称'] || '未命名机会') + (kind === '报名截止' ? '（报名截止）' : ''),
+      'DESCRIPTION:' + icsEscape(descParts.join(' · ').replace(/\r/g, '')));
+    if (link) out.push('URL:' + link);
+    alarms.forEach(function (days) {
+      out.push('BEGIN:VALARM', 'TRIGGER:-P' + days + 'D', 'ACTION:DISPLAY',
+        'DESCRIPTION:距离' + kind + '还有 ' + days + ' 天', 'END:VALARM');
+    });
+    out.push('END:VEVENT');
+  };
+  rows.forEach(function (r) {
+    if (officialOnly && !isOfficial(r)) return;
+    if (mineOnly && !isPlanned(r)) return;
+    var due = String(r['截止时间'] || '').slice(0, 10);
+    var actStart = String(r['活动日期'] || '').slice(0, 10);
+    var actEnd = String(r['活动结束日期'] || '').slice(0, 10);
+    var baseUid = r['来源标识'] || r._id || [r['名称'], r['来源']].join('|');
+    if (isDateStr(due)) pushEvent(r, '报名截止', due, due, baseUid + '-due');
+    if (isDateStr(actStart) || isDateStr(actEnd)) {
+      var s = isDateStr(actStart) ? actStart : due;
+      var e = isDateStr(actEnd) ? actEnd : s;
+      if (isDateStr(s) && s !== due) {
+        var note = '';
+        if (e !== s) {
+          note = '赛期 ' + s + ' 至 ' + e;
+          if (spanDays(s, e) > MAX_SPAN_DAYS) e = s;
+        }
+        pushEvent(r, '活动日程', s, e, baseUid + '-event', note);
+      }
+    }
+  });
+  out.push('END:VCALENDAR');
+  return out.map(foldCalendarLine).join('\r\n') + '\r\n';
+}
+
+function reload() {
+  renderAll();
+  return Promise.resolve();
+}
+
+/* ============================================================
+   动效与数据管理
+   ============================================================ */
+var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---- 入场：视图切换 / 首屏时给元素一次弹簧入场，滚动到可视区触发 ---- */
+var entranceIO = ('IntersectionObserver' in window) ? new IntersectionObserver(function (entries) {
+  entries.forEach(function (en) {
+    if (en.isIntersecting) { en.target.classList.add('in'); entranceIO.unobserve(en.target); }
+  });
+}, { rootMargin: '0px 0px -6% 0px', threshold: 0 }) : null;
+
+function animateBars(view) {
+  if (REDUCED) return;
+  $$('.bar-track i, .prog .track i', view).forEach(function (el) {
+    var target = el.style.width || '0%';
+    el.style.width = '0%';
+    requestAnimationFrame(function () { requestAnimationFrame(function () { el.style.width = target; }); });
+  });
+}
+function countUp(view) {
+  if (REDUCED) return;
+  $$('.stat b', view).forEach(function (el) {
+    var t = el.textContent.trim();
+    if (!/^\d+$/.test(t)) return;
+    var target = Number(t);
+    if (target <= 0) return;
+    var start = null, dur = 650;
+    el.textContent = '0';
+    function tick(ts) {
+      if (!start) start = ts;
+      var p = Math.min(1, (ts - start) / dur);
+      el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
+}
+function playEntrance(view) {
+  if (!view || REDUCED || !entranceIO) return;
+  var els = $$('.hero, .sec-head, .card, .dir-card, .xp-card, .year-block', view);
+  els.forEach(function (el, i) {
+    el.classList.remove('in');
+    el.classList.add('pre');
+    el.style.setProperty('--d', Math.min(i * 55, 440) + 'ms');
+    entranceIO.observe(el);
+  });
+  setTimeout(function () {
+    var vh = window.innerHeight || 800;
+    els.forEach(function (el) {
+      if (!el.classList.contains('in') && el.getBoundingClientRect().top < vh * 0.94) {
+        el.classList.add('in');
+        entranceIO.unobserve(el);
+      }
+    });
+  }, 1200);
+  animateBars(view);
+  countUp(view);
+}
+
+/* ---- 导航滑动玻璃指示块 ---- */
+function syncTabGlider() {
+  var g = $('#tabGlider'), b = $('#tabs button.active');
+  if (!g || !b) return;
+  g.style.left = b.offsetLeft + 'px';
+  g.style.width = b.offsetWidth + 'px';
+}
+
+/* ---- 指针跟随的液态高光 ---- */
+function bindMotion() {
+  if (REDUCED || !window.matchMedia || !window.matchMedia('(pointer:fine)').matches) return;
+  var glowEl = null, glowRaf = 0, gx = 0, gy = 0;
+  function apply() {
+    glowRaf = 0;
+    if (!glowEl) return;
+    var r = glowEl.getBoundingClientRect();
+    glowEl.style.setProperty('--mx', (gx - r.left) + 'px');
+    glowEl.style.setProperty('--my', (gy - r.top) + 'px');
+  }
+  document.addEventListener('pointermove', function (e) {
+    var el = e.target.closest && e.target.closest('.card,.dir-card,.xp-card,.exp-card');
+    if (!el) return;
+    el.classList.add('glowable');
+    glowEl = el; gx = e.clientX; gy = e.clientY;
+    if (!glowRaf) glowRaf = requestAnimationFrame(apply);
+  }, { passive: true });
+}
+
+/* ---- 数据管理：示例清理 / 补回 / 备份导出导入 / 重置 ---- */
+function updateDataStats() {
+  var box = $('#dataStats');
+  if (!box) return;
+  var total = 0;
+  var cells = TABLE_KEYS.map(function (k) {
+    var n = STORE.data[k].length; total += n;
+    return '<div class="stat"><b>' + n + '</b><small>' + esc(TABLE_LABEL[k]) + '</small></div>';
+  });
+  cells.unshift('<div class="stat gold"><b>' + total + '</b><small>记录总数</small></div>');
+  box.innerHTML = cells.join('');
+  var bytes = 0;
+  try { bytes = (localStorage.getItem(LS_KEY) || '').length; } catch (e) {}
+  var size = $('#dataSize');
+  if (size) size.textContent = '当前占用约 ' + (bytes / 1024).toFixed(1) + ' KB。';
+}
+function bindDataTools() {
+  function openData() { updateDataStats(); $('#dataOverlay').classList.remove('hidden'); }
+  function closeData() { $('#dataOverlay').classList.add('hidden'); }
+  $('#dataBtn').addEventListener('click', openData);
+  $('#dataClose').addEventListener('click', closeData);
+  $('#dataOverlay').addEventListener('click', function (e) { if (e.target === $('#dataOverlay')) closeData(); });
+
+  $('#dataClearSamples').addEventListener('click', function () {
+    var removed = {}, n = 0;
+    TABLE_KEYS.forEach(function (k) {
+      var rm = STORE.data[k].filter(isSample);
+      if (rm.length) {
+        removed[k] = rm; n += rm.length;
+        STORE.data[k] = STORE.data[k].filter(function (r) { return !isSample(r); });
+      }
+    });
+    if (!n) { toast('没有可清空的示例记录'); return; }
+    if (!confirm('确认清空 ' + n + ' 条示例记录？\n真实记录与公开日程会保留，清空后可撤销。')) return;
+    localSave(); renderAll(); updateDataStats();
+    toast('已清空 ' + n + ' 条示例记录', '', '撤销恢复', function () {
+      TABLE_KEYS.forEach(function (k) {
+        (removed[k] || []).forEach(function (r) { STORE.data[k].push(r); });
+      });
+      localSave(); renderAll(); updateDataStats();
+      toast('已恢复 ' + n + ' 条示例记录');
+    });
+  });
+
+  $('#dataRestoreSamples').addEventListener('click', function () {
+    var added = 0;
+    TABLE_KEYS.forEach(function (k) {
+      (SEED_DATA[k] || []).forEach(function (r) {
+        if (!STORE.data[k].some(function (x) { return x._id === r._id; })) {
+          STORE.data[k].push(JSON.parse(JSON.stringify(r))); added++;
+        }
+      });
+    });
+    if (added) { localSave(); renderAll(); updateDataStats(); toast('已补回 ' + added + ' 条示例记录'); }
+    else toast('示例记录都在，无需补回');
+  });
+
+  $('#dataExport').addEventListener('click', function () {
+    var payload = { app: 'college-growth-atlas', version: 1, exportedAt: new Date().toISOString(), tables: STORE.data };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '大学成长地图-备份-' + todayISO() + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    toast('备份已开始下载，请妥善保存');
+  });
+
+  $('#dataImport').addEventListener('click', function () { $('#dataFile').click(); });
+  $('#dataFile').addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    file.text().then(function (text) {
+      var obj = JSON.parse(text);
+      if (!obj || !obj.tables || !TABLE_KEYS.every(function (k) { return Array.isArray(obj.tables[k]); })) {
+        toast('导入失败：不是有效的备份文件', 'err'); return;
+      }
+      var n = TABLE_KEYS.reduce(function (s, k) { return s + obj.tables[k].length; }, 0);
+      if (!confirm('导入将覆盖当前全部数据，换成备份中的 ' + n + ' 条记录。\n建议先导出当前数据。确定继续？')) return;
+      STORE.data = obj.tables;
+      localSave(); renderAll(); updateDataStats();
+      toast('导入成功，共 ' + n + ' 条记录');
+    }).catch(function () { toast('导入失败：文件不是有效的 JSON', 'err'); });
+  });
+
+  $('#dataReset').addEventListener('click', function () {
+    if (!confirm('确认重置全部数据？\n当前所有修改都会丢失，恢复为初始示例数据。建议先导出备份。')) return;
+    STORE.data = seedData();
+    localSave(); renderAll(); updateDataStats();
+    toast('已重置为初始示例数据');
+  });
+}
+/* ---------------- 启动 ---------------- */
+loadInitial().then(function () {
+  bind();
+  bindMotion();
+  bindDataTools();
+  renderAll();
+  syncTabGlider();
+  playEntrance($('#view-overview'));
+  if (FIRST_SEED) toast('已为你准备 90 条示例数据，点右上角「数据」可清空示例或导出备份');
+  window.__APP_READY__ = true;
+  window.__APP_STATE__ = function () {
+    return { online: false, backend: 'local', schema: !!STORE.schema,
+      counts: TABLE_KEYS.reduce(function (o, k) { o[k] = STORE.data[k].length; return o; }, {}) };
+  };
+}).catch(function (e) {
+  console.error('启动失败', e);
+  try { bind(); renderAll(); } catch (e2) { console.error(e2); }
+  window.__APP_READY__ = true;
+  window.__APP_ERROR__ = String(e && e.message || e);
+});
+})();
+</script>
+</body>
+</html>

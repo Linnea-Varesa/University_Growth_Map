@@ -1,0 +1,68 @@
+{
+  "title": "发展方向",
+  "properties": [
+    {
+      "name": "方向名称",
+      "config": {
+        "text": ""
+      }
+    },
+    {
+      "name": "一句话简介",
+      "config": {
+        "text": ""
+      }
+    },
+    {
+      "name": "所需能力",
+      "config": {
+        "text": ""
+      }
+    },
+    {
+      "name": "已有基础",
+      "config": {
+        "text": ""
+      }
+    },
+    {
+      "name": "关键阶段",
+      "config": {
+        "text": ""
+      }
+    },
+    {
+      "name": "准备事项",
+      "config": {
+        "text": ""
+      }
+    },
+    {
+      "name": "意向程度",
+      "config": {
+        "select": {
+          "options": [
+            {
+              "text": "非常感兴趣"
+            },
+            {
+              "text": "感兴趣"
+            },
+            {
+              "text": "了解中"
+            },
+            {
+              "text": "考虑中"
+            },
+            {
+              "text": "观望"
+            },
+            {
+              "text": "不考虑"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

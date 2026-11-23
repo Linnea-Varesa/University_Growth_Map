@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <rect width="120" height="120" fill="#f7faf8"/>
+
+  <!-- small dots -->
+  <g fill="#cfe6d9">
+    <circle cx="10" cy="12" r="2.4"/>
+    <circle cx="46" cy="8" r="2"/>
+    <circle cx="86" cy="14" r="2.4"/>
+    <circle cx="24" cy="44" r="2"/>
+    <circle cx="64" cy="38" r="2.4"/>
+    <circle cx="104" cy="44" r="2"/>
+    <circle cx="10" cy="76" r="2.4"/>
+    <circle cx="48" cy="72" r="2"/>
+    <circle cx="88" cy="78" r="2.4"/>
+    <circle cx="30" cy="106" r="2"/>
+    <circle cx="68" cy="110" r="2.4"/>
+    <circle cx="108" cy="104" r="2"/>
+  </g>
+
+  <!-- leaves -->
+  <g fill="#a8cdb8">
+    <path d="M34 22 C40 18 46 24 42 30 C36 34 30 28 34 22 Z"/>
+    <path d="M94 56 C100 52 106 58 102 64 C96 68 90 62 94 56 Z"/>
+    <path d="M20 88 C26 84 32 90 28 96 C22 100 16 94 20 88 Z"/>
+    <path d="M78 100 C84 96 90 102 86 108 C80 112 74 106 78 100 Z"/>
+  </g>
+
+  <!-- stars -->
+  <g fill="#c39a49" opacity=".5">
+    <path d="M60 62 Q62 68 68 70 Q62 72 60 78 Q58 72 52 70 Q58 68 60 62 Z"/>
+    <path d="M112 24 Q113.5 28.5 118 30 Q113.5 31.5 112 36 Q110.5 31.5 106 30 Q110.5 28.5 112 24 Z"/>
+    <path d="M14 56 Q15.5 60.5 20 62 Q15.5 63.5 14 68 Q12.5 63.5 8 62 Q12.5 60.5 14 56 Z"/>
+  </g>
+
+  <!-- tiny strokes -->
+  <g fill="none" stroke="#e6f2eb" stroke-width="2.4" stroke-linecap="round">
+    <path d="M70 20 L82 20"/>
+    <path d="M62 92 L74 92"/>
+    <path d="M40 60 L50 60"/>
+  </g>
+</svg>

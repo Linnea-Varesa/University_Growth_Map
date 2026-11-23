@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <ellipse cx="112" cy="216" rx="86" ry="11" fill="#e6f2eb"/>
+
+  <!-- clock body -->
+  <circle cx="104" cy="118" r="76" fill="#ffffff" stroke="#1f3a2e" stroke-width="4"/>
+  <circle cx="104" cy="118" r="64" fill="#e6f2eb" stroke="#3f7d5a" stroke-width="3.5"/>
+  <g fill="none" stroke="#508565" stroke-width="3" stroke-linecap="round">
+    <path d="M104 60 L104 70"/>
+    <path d="M104 166 L104 176"/>
+    <path d="M46 118 L56 118"/>
+    <path d="M152 118 L162 118"/>
+  </g>
+
+  <!-- legs / bells -->
+  <circle cx="72" cy="42" r="11" fill="#c39a49" stroke="#1f3a2e" stroke-width="3.5"/>
+  <circle cx="136" cy="42" r="11" fill="#c39a49" stroke="#1f3a2e" stroke-width="3.5"/>
+  <path d="M88 198 L76 214" fill="none" stroke="#1f3a2e" stroke-width="4" stroke-linecap="round"/>
+  <path d="M120 198 L132 214" fill="none" stroke="#1f3a2e" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- hands -->
+  <path d="M104 118 L104 78" fill="none" stroke="#1f3a2e" stroke-width="5" stroke-linecap="round"/>
+  <path d="M104 118 L138 132" fill="none" stroke="#1f3a2e" stroke-width="5" stroke-linecap="round"/>
+  <path d="M104 118 L82 146" fill="none" stroke="#d9806a" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="104" cy="118" r="7" fill="#1f3a2e"/>
+
+  <!-- calendar page -->
+  <rect x="168" y="132" width="60" height="66" rx="6" fill="#ffffff" stroke="#1f3a2e" stroke-width="3.5"/>
+  <rect x="168" y="132" width="60" height="20" rx="6" fill="#3f7d5a"/>
+  <rect x="168" y="146" width="60" height="6" fill="#3f7d5a"/>
+  <g fill="none" stroke="#a8cdb8" stroke-width="3" stroke-linecap="round">
+    <path d="M180 142 L180 166"/>
+    <path d="M216 142 L216 166"/>
+  </g>
+  <g fill="none" stroke="#508565" stroke-width="3" stroke-linecap="round">
+    <path d="M180 170 L216 170"/>
+    <path d="M180 182 L216 182"/>
+  </g>
+  <circle cx="186" cy="188" r="3.5" fill="#d9806a"/>
+  <circle cx="200" cy="188" r="3.5" fill="#c39a49"/>
+</svg>

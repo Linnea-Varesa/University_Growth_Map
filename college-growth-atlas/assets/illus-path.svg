@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 240">
+  <rect width="600" height="240" fill="#f7faf8"/>
+
+  <!-- sky -->
+  <circle cx="500" cy="54" r="26" fill="#c39a49" opacity=".26"/>
+  <g fill="#ffffff" stroke="#cfe6d9" stroke-width="3">
+    <ellipse cx="120" cy="52" rx="30" ry="16"/>
+    <ellipse cx="144" cy="43" rx="19" ry="14"/>
+  </g>
+  <g fill="none" stroke="#a8cdb8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M300 40 q7 -7 14 0 q7 -7 14 0"/>
+    <path d="M348 26 q6 -6 12 0 q6 -6 12 0"/>
+  </g>
+
+  <!-- hills -->
+  <path d="M-10 190 C 90 158 190 174 290 156 C 390 138 480 162 610 140 L 610 240 L -10 240 Z" fill="#e6f2eb"/>
+  <path d="M-10 214 C 110 190 220 214 340 198 C 440 184 520 204 610 188 L 610 240 L -10 240 Z" fill="#cfe6d9"/>
+
+  <!-- flag hill -->
+  <path d="M370 210 C 400 160 470 140 610 132 L 610 240 L 370 240 Z" fill="#a8cdb8"/>
+  <path d="M370 210 C 400 160 470 140 610 132" fill="none" stroke="#6aa37f" stroke-width="3.5" stroke-linecap="round"/>
+  <g fill="#6aa37f">
+    <path d="M470 196 L484 170 L498 196 Z"/>
+    <path d="M520 178 L534 150 L548 178 Z"/>
+    <path d="M566 164 L580 138 L594 164 Z"/>
+  </g>
+
+  <!-- flag -->
+  <path d="M556 138 L556 60" fill="none" stroke="#1f3a2e" stroke-width="5" stroke-linecap="round"/>
+  <path d="M556 62 L612 78 L556 96 Z" fill="#d9806a"/>
+  <circle cx="556" cy="56" r="6" fill="#c39a49"/>
+
+  <!-- winding path -->
+  <path d="M28 240 C 96 216 126 190 190 182 C 250 175 268 194 330 190 C 400 186 430 200 470 196" fill="none" stroke="#ffffff" stroke-width="34" stroke-linecap="round"/>
+  <path d="M28 240 C 96 216 126 190 190 182 C 250 175 268 194 330 190 C 400 186 430 200 470 196" fill="none" stroke="#cfe6d9" stroke-width="4" stroke-dasharray="14 16" stroke-linecap="round"/>
+
+  <!-- start marker -->
+  <circle cx="26" cy="222" r="12" fill="#3f7d5a"/>
+  <circle cx="26" cy="222" r="5" fill="#ffffff"/>
+
+  <!-- trees -->
+  <path d="M96 214 L96 190" fill="none" stroke="#2f6b4f" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="96" cy="176" r="20" fill="#6aa37f"/>
+  <circle cx="112" cy="186" r="12" fill="#a8cdb8"/>
+
+  <path d="M232 230 L232 208" fill="none" stroke="#2f6b4f" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="232" cy="194" r="18" fill="#a8cdb8"/>
+  <circle cx="247" cy="203" r="11" fill="#cfe6d9"/>
+
+  <path d="M420 232 L420 212" fill="none" stroke="#2f6b4f" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="420" cy="200" r="15" fill="#6aa37f"/>
+
+  <!-- ground tufts -->
+  <g fill="#cfe6d9">
+    <ellipse cx="150" cy="234" rx="24" ry="9"/>
+    <ellipse cx="300" cy="238" rx="20" ry="8"/>
+    <ellipse cx="500" cy="234" rx="22" ry="8"/>
+  </g>
+  <circle cx="176" cy="230" r="4" fill="#d9806a"/>
+  <circle cx="342" cy="232" r="3.5" fill="#c39a49"/>
+  <circle cx="524" cy="228" r="4" fill="#195578"/>
+</svg>

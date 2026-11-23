@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 咨询模块 · 嵌入演示</title>
+<style>
+  /* 这里故意做成「主站」的样子，用来观察模块能不能融进去 */
+  body{margin:0;background:#f7f5f0;color:#2c2a26;
+    font:15px/1.75 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",serif}
+  header{padding:28px 32px;border-bottom:1px solid #e6e2da}
+  .kicker{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#a09a8e}
+  h1{margin:6px 0 4px;font-size:24px;font-weight:600}
+  .lede{color:#8b8578;font-size:13.5px}
+  main{max-width:760px;margin:0 auto;padding:28px 24px 120px}
+  section{margin-bottom:34px}
+  h2{font-size:15px;letter-spacing:.4px;margin:0 0 10px;font-weight:600}
+  .hint{font-size:12.5px;color:#8b8578;background:#fffdf8;border:1px solid #ece6da;
+    border-radius:12px;padding:12px 14px}
+  .hint code{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:#f2eee5;
+    padding:1px 5px;border-radius:5px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+  .item{background:#fff;border:1px solid #e6e2da;border-radius:12px;padding:12px 14px}
+  .item .t{font-size:13.5px;font-weight:600;margin-bottom:3px}
+  .item .m{font-size:11.5px;color:#9a9488}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">College Growth Atlas · 嵌入演示</div>
+  <h1>大学成长地图（模拟主站）</h1>
+  <div class="lede">这个页面只用于验证 AI 咨询模块：右下角悬浮按钮就是它注入的。</div>
+</header>
+
+<main>
+  <section>
+    <h2>它读的是哪份数据</h2>
+    <div class="hint">
+      本页往 <code>localStorage["cga.demo"]</code> 写了一份模拟数据（经历 / 方向 / 体验卡 / 机会 / 专业），
+      模块会自动扫描 localStorage、挑出最像主数据集的那一份。真实接入时换成主站自己的数据即可，
+      也可以直接调 <code>AtlasAI.setProvider(() =&gt; 数据对象)</code> 精确指定。
+    </div>
+  </section>
+
+  <section>
+    <h2>模拟的经历</h2>
+    <div id="ex" class="grid"></div>
+  </section>
+
+  <section>
+    <h2>模拟的方向</h2>
+    <div id="dir" class="grid"></div>
+  </section>
+</main>
+
+<script>
+/* ── 造一份模拟数据（结构参照主站：经历→能力标签、方向→意向、机会→截止） ── */
+const demo = {
+  profile: { name: '示例同学', grade: '大二', major: '计算机科学与技术', school: '示例大学' },
+  experiences: [
+    { name: '校程序设计竞赛', type: '竞赛', role: '队长', status: '已完成', start: '2025-03', end: '2025-06',
+      tags: ['C++', '算法', '团队协作'], detail: '3 人小队，负责分工与调试，校级二等奖' },
+    { name: '学院官网改版', type: '项目', role: '前端', status: '进行中', start: '2025-09',
+      tags: ['Vue', '前端', '沟通'], detail: '负责 4 个页面，跟老师对接需求' },
+    { name: '暑假便利店兼职', type: '实习/兼职', role: '店员', status: '已完成', start: '2025-07', end: '2025-08',
+      tags: ['抗压', '沟通'], detail: '' },
+    { name: '数据结构课程助教', type: '其他', role: '助教', status: '进行中', start: '2025-09',
+      tags: ['数据结构', '讲解'], detail: '每周答疑 2 次' },
+  ],
+  directions: [
+    { name: '后端开发', intent: 5, required: ['Java', '数据库', '分布式'], have: ['C++'] },
+    { name: '算法/竞赛', intent: 3, required: ['算法', '数学'], have: ['算法'] },
+    { name: '产品经理', intent: 2, required: ['需求分析', '数据分析', '沟通'], have: ['沟通'] },
+  ],
+  experiments: [
+    { name: '刷 30 道 LeetCode', direction: '算法/竞赛', status: '进行中', progress: 40, steps: ['数组', 'DP', '图'] },
+    { name: '写一个 CRUD 后端', direction: '后端开发', status: '未开始', progress: 0 },
+  ],
+  opportunities: [
+    { name: '蓝桥杯报名', type: '竞赛', deadline: '2026-03-20', status: '待报名', source: '公开日程' },
+    { name: '大英竞赛', type: '竞赛', deadline: '2026-04-05', status: '未关注', source: '公开日程' },
+    { name: '计算机三级', type: '考试', deadline: '2026-05-10', status: '待报名', source: '公开日程' },
+  ],
+  majors: [
+    { name: '计算机科学与技术', level: '了解较多', content: '数据结构、操作系统、网络、数据库',
+      careers: ['后端开发', '算法工程师', '测试'], advice: '尽快补一门工程实践' },
+    { name: '数据科学', level: '听说过', content: '统计、机器学习', careers: ['数据分析', '算法'], advice: '' },
+  ],
+};
+localStorage.setItem('cga.demo', JSON.stringify(demo));
+
+// 把模拟数据渲染出来，方便对照 AI 的回答
+const ex = document.getElementById('ex');
+demo.experiences.forEach((e) => {
+  const d = document.createElement('div');
+  d.className = 'item';
+  d.innerHTML = '<div class="t"></div><div class="m"></div>';
+  d.querySelector('.t').textContent = e.name;
+  d.querySelector('.m').textContent = [e.type, e.role, e.tags.join(' / ')].filter(Boolean).join(' · ');
+  ex.append(d);
+});
+const dir = document.getElementById('dir');
+demo.directions.forEach((e) => {
+  const d = document.createElement('div');
+  d.className = 'item';
+  d.innerHTML = '<div class="t"></div><div class="m"></div>';
+  d.querySelector('.t').textContent = e.name;
+  d.querySelector('.m').textContent = '意向 ' + e.intent + '/5 · 已有 ' + (e.have.join('、') || '—');
+  dir.append(d);
+});
+</script>
+
+<!-- 只有这一行是接入动作 -->
+<script src="./atlas-ai-consult.js"></script>
+<script>AtlasAI.mount();</script>
+
+</body>
+</html>

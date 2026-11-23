@@ -1,0 +1,65 @@
+{
+  "title": "专业探索",
+  "properties": [
+    {
+      "name": "专业名称",
+      "config": {
+        "text": ""
+      }
+    },
+    {
+      "name": "了解程度",
+      "config": {
+        "select": {
+          "options": [
+            {
+              "text": "未了解"
+            },
+            {
+              "text": "初步了解"
+            },
+            {
+              "text": "比较了解"
+            },
+            {
+              "text": "深入了解"
+            },
+            {
+              "text": "已体验"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "学习内容",
+      "config": {
+        "text": ""
+      }
+    },
+    {
+      "name": "相关职业",
+      "config": {
+        "text": ""
+      }
+    },
+    {
+      "name": "核心能力",
+      "config": {
+        "text": ""
+      }
+    },
+    {
+      "name": "相邻领域",
+      "config": {
+        "text": ""
+      }
+    },
+    {
+      "name": "体验建议",
+      "config": {
+        "text": ""
+      }
+    }
+  ]
+}

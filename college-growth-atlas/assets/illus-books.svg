@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <ellipse cx="120" cy="222" rx="72" ry="12" fill="#e6f2eb"/>
+
+  <!-- bottom book -->
+  <path d="M38 196 L196 196 L196 216 L38 216 Z" fill="#3f7d5a"/>
+  <path d="M38 196 L196 196 L190 186 L44 186 Z" fill="#6aa37f"/>
+  <rect x="34" y="186" width="164" height="10" rx="5" fill="#ffffff" stroke="#1f3a2e" stroke-width="3.5"/>
+  <rect x="34" y="196" width="164" height="20" rx="5" fill="#195578" stroke="#1f3a2e" stroke-width="3.5"/>
+
+  <!-- middle book -->
+  <rect x="48" y="158" width="136" height="10" rx="5" fill="#ffffff" stroke="#1f3a2e" stroke-width="3.5"/>
+  <rect x="48" y="168" width="136" height="18" rx="5" fill="#c39a49" stroke="#1f3a2e" stroke-width="3.5"/>
+
+  <!-- top book -->
+  <rect x="64" y="134" width="112" height="9" rx="4.5" fill="#ffffff" stroke="#1f3a2e" stroke-width="3.5"/>
+  <rect x="64" y="143" width="112" height="15" rx="5" fill="#d9806a" stroke="#1f3a2e" stroke-width="3.5"/>
+
+  <!-- plant on top -->
+  <path d="M120 134 C116 118 122 108 120 92" fill="none" stroke="#2f6b4f" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M120 118 C104 118 94 106 96 92 C112 90 121 102 120 118 Z" fill="#3f7d5a"/>
+  <path d="M120 108 C136 108 146 96 144 82 C128 80 119 92 120 108 Z" fill="#6aa37f"/>
+  <path d="M120 92 C112 90 108 82 110 73 C119 75 122 83 120 92 Z" fill="#a8cdb8"/>
+
+  <!-- page lines -->
+  <g fill="none" stroke="#a8cdb8" stroke-width="2.5" stroke-linecap="round">
+    <path d="M46 206 L182 206"/>
+    <path d="M60 177 L172 177"/>
+  </g>
+</svg>
