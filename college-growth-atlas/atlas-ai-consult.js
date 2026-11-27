@@ -1,5 +1,10 @@
 /* ══════════════════════════════════════════════════════════════════════════
- * 大学成长地图 · AI 咨询模块（atlas-ai-consult.js）v1.1.2
+ * 大学成长地图 · AI 咨询模块（atlas-ai-consult.js）v1.1.5
+ * v1.1.5：去掉底栏「看清楚要发什么」按钮（对使用者没用），相关样式与预览渲染一并移除。
+ * v1.1.4：输入框移出滚动区、固定在面板底部（不再被长回答顶走）；
+ *         对话记录关闭面板/刷新页面后保留（只存本机 localStorage），并加了「清空对话」。
+ * v1.1.3：输入框随内容自动长高（上限 240px 或面板高度 32%），并加了滚动条；
+ *         发送后自动清空输入框，不用手动删上一条问题。
  * v1.1.2：Qoder Sites 部署会注入右下角徽标，检测到就把悬浮按钮与面板抬高让位。
  * v1.1.1：首次未配 Key 时点「问AI」，预填问题不再丢失（等输入框出现后补填）。
  * 基于队友交付的 v1.0.0 适配：校园绿 × 液态玻璃外观（消费主站设计变量，
@@ -9,7 +14,7 @@
  *   1. 不碰主站代码：单文件 IIFE，注入自己的 DOM 与样式，前缀全部 atlas-ai-
  *   2. 不用后端：Key 存本地，浏览器直连阿里云（百炼已允许跨域）
  *   3. 读你的数据：把「本地工作台」压成一份摘要给模型，让建议有据可依
- *   4. 隐私可验证：发出去的内容先给你看一眼，确认了才发
+ *   4. 只发摘要：数据先压成摘要再发，原始备份、作品链接不会整包上传
  *
  * 用法
  *   1) 单独引入：本文件作为外链脚本加载后调 AtlasAI.mount()
@@ -109,13 +114,39 @@
   ];
 
   // ── 状态 ────────────────────────────────────────────────────────────────
+  const HIST_KEY = 'atlas.ai.history.v1';   // 对话记录（只在本机，跟随浏览器）
+  const MAX_STORED = 40;                    // 最多保留多少条，防止 localStorage 涨爆
   let conf = null;               // { key, base, regionLabel, model }
   let digest = null;             // 摘要对象
-  let history = [];              // { role, content }
+  let history = loadHistory();   // { role, content, label }
   let pendingQuestion = '';      // 面板还没建出输入框时先记住要预填的问题
   let busy = false;
   let acct = { status: 'idle', name: '' };  // Qoder 登录状态
   const root = {};
+
+  // 对话记录：关面板、刷新页面都还在；只存本机，不经过任何服务器
+  function loadHistory() {
+    try {
+      const raw = localStorage.getItem(HIST_KEY);
+      const arr = raw ? JSON.parse(raw) : null;
+      if (!Array.isArray(arr)) return [];
+      return arr
+        .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+        .slice(-MAX_STORED);
+    } catch (_) {
+      return [];
+    }
+  }
+  function saveHistory() {
+    try {
+      const trimmed = history.slice(-MAX_STORED).map((m) => ({
+        role: m.role,
+        content: String(m.content).slice(0, 12000),
+        label: m.label,
+      }));
+      localStorage.setItem(HIST_KEY, JSON.stringify(trimmed));
+    } catch (_) {}
+  }
 
   // ══════════════════════════════════════════════════════════════════════
   // 1. 数据桥：把本地数据压成一份摘要
@@ -383,7 +414,8 @@
 
   .atlas-ai-foot{flex:none;padding:10px 18px 16px;border-top:1px solid var(--line,rgba(31,58,46,.1))}
   .atlas-ai-in{display:flex;gap:8px;align-items:flex-end}
-  .atlas-ai-in textarea{flex:1;min-height:44px;max-height:120px;resize:none;font:inherit;font-size:13.5px;
+  .atlas-ai-in textarea{flex:1;min-height:44px;max-height:240px;resize:none;font:inherit;font-size:13.5px;
+    line-height:1.5;overflow-y:auto;
     padding:9px 11px;border:1px solid var(--glass-edge,rgba(255,255,255,.72));border-radius:11px;outline:none;
     background:rgba(var(--hi,255,255,255),.7);color:var(--ink,#1f3a2e);transition:border-color .15s,box-shadow .15s}
   .atlas-ai-in textarea:focus{border-color:var(--light,#6aa37f);box-shadow:0 0 0 3px color-mix(in srgb,var(--site-accent,#3f7d5a) 18%,transparent)}
@@ -424,11 +456,6 @@
   .atlas-ai-att .s{flex:none;width:2.4em;color:var(--coral,#c05a44)}
   .atlas-ai-att .s.g{color:var(--green,#3f7d5a)}
   .atlas-ai-att .m{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  details.atlas-ai-prev{margin-top:14px;font-size:12px;color:var(--ink-3,#64806f)}
-  details.atlas-ai-prev summary{cursor:pointer;color:var(--ink-2,#3c5a4b)}
-  details.atlas-ai-prev pre{margin:8px 0 0;padding:9px;background:rgba(var(--hi,255,255,255),.55);border-radius:9px;
-    max-height:200px;overflow:auto;font-size:11px;line-height:1.55;white-space:pre-wrap;word-break:break-all;
-    color:var(--ink-2,#3c5a4b)}
   @media(max-width:520px){
     .atlas-ai-cards{grid-template-columns:1fr}
     .atlas-ai-fab{right:14px;bottom:14px;padding:10px 15px;font-size:13px}
@@ -571,8 +598,8 @@
   function closePanel() {
     if (root.panel) root.panel.remove();
     if (root.mask) root.mask.remove();
-    root.panel = root.mask = root.body = null;
-    history = [];
+    root.panel = root.mask = root.body = root.msgs = root.foot = null;
+    // 历史保留：关掉再打开还能接着看（并已落到 localStorage）
   }
 
   function setInput(t) {
@@ -588,10 +615,22 @@
     root.body.append(renderAccount());
 
     if (!conf) {
+      if (root.foot) { root.foot.remove(); root.foot = null; }
+      root.msgs = null;
       root.body.append(renderSetup());
       return;
     }
-    root.body.append(renderCards(), renderMessages(), renderFoot());
+
+    root.body.append(renderCards());
+    // 消息单独放一个容器：输入框在它外面（固定在面板底部），不会再被内容顶走
+    root.msgs = h('div', { class: 'atlas-ai-msgs' });
+    root.msgs.append(renderMessages());
+    root.body.append(root.msgs);
+
+    if (root.foot) root.foot.remove();
+    root.foot = renderFoot();
+    root.panel.append(root.foot);
+    root.body.scrollTop = root.body.scrollHeight;
   }
 
   // ── 首次配置 ────────────────────────────────────────────────────────────
@@ -732,7 +771,7 @@
             class: 'tx',
             text:
               '上面六个是最常用的咨询。也可以直接在下面提问，我会基于你记录的经历、方向和截止日期回答。' +
-              '点「看清楚要发什么」可以确认发出去的内容。',
+              '每次只把数据的摘要发给你自己的模型，原始记录和作品链接不会上传。',
           }),
         ])
       );
@@ -752,23 +791,61 @@
     return wrap;
   }
 
-  function renderFoot() {
-    const ta = h('textarea', { rows: '1', placeholder: '就你的经历、方向或选择提问…（Enter 发送）' });
+  function clearDialogBtn() {
+    const b = h('button', { text: '清空对话' });
+    b.setAttribute('data-clear', '1');
+    b.onclick = () => {
+      if (!window.confirm('清空这段对话记录？本机存档会一起删除。')) return;
+      window.AtlasAI.reset();
+    };
+    return b;
+  }
+  // 第一条消息发出后把「清空对话」补进底栏，不用重开面板
+  function ensureClearBtn() {
+    const meta = root.foot && root.foot.querySelector('.atlas-ai-meta');
+    if (!meta || meta.querySelector('[data-clear]')) return;
+    const keyBtn = Array.from(meta.children).find((el) => el.textContent === '换 Key');
+    meta.insertBefore(clearDialogBtn(), keyBtn || null);
+  }
+
+  function renderFoot() {    const ta = h('textarea', {
+      rows: '1',
+      placeholder: '就你的经历或方向提问…（Enter 发送）',
+    });
     const send = h('button', { class: 'atlas-ai-send', text: '发送' });
     root.input = ta;
 
-    const grow = () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight || 44, 120) + 'px'; };
-    // 首次配 Key 之前点过「问AI」：问题存在 pendingQuestion 里，这里补填
+    // 高度跟着内容走：上限取 240px 与面板高度的 32% 里的小者，超过才出滚动条
+    const maxH = () => Math.min(240, Math.max(96, Math.round(window.innerHeight * 0.32)));
+    const grow = () => {
+      ta.style.height = 'auto';
+      // textarea 是 border-box：scrollHeight 含 padding 不含 border，补上 border 再作为总高
+      const extra = ta.offsetHeight - ta.clientHeight;
+      const limit = maxH();
+      const need = (ta.scrollHeight || 44) + extra;
+      ta.style.height = Math.min(need, limit) + 'px';
+      ta.style.overflowY = need > limit ? 'auto' : 'hidden';
+    };
+    const resetInput = () => {
+      ta.value = '';
+      ta.style.height = '44px';
+      grow();
+      root.body.scrollTop = root.body.scrollHeight;
+    };
+
+    // 首次配 Key 之前点过「问AI」：问题存在 pendingQuestion 里，等布局完再补填并撑开
     if (pendingQuestion) {
       ta.value = pendingQuestion;
       pendingQuestion = '';
-      grow();
+      (window.requestAnimationFrame || setTimeout)(grow);
     }
 
     const askFree = () => {
       const t = ta.value.trim();
       if (!t || busy) return;
       ask(t, null);
+      resetInput();   // 发完立刻清空，下一条直接输入，不用手动删
+      ta.focus();
     };
     send.onclick = askFree;
     ta.addEventListener('keydown', (e) => {
@@ -776,32 +853,17 @@
     });
 
     const meta = h('div', { class: 'atlas-ai-meta' });
-    const prevBtn = h('button', { text: '看清楚要发什么' });
-    prevBtn.onclick = () => showPreview();
     const resetBtn = h('button', { text: '换 Key' });
     resetBtn.onclick = () => { localStorage.removeItem(STORE); conf = null; refreshPanel(); };
-    meta.append(h('span', { text: conf.regionLabel || '' }), prevBtn, resetBtn);
+    meta.append(h('span', { text: conf.regionLabel || '' }));
+    if (history.length) meta.append(clearDialogBtn());
+    meta.append(resetBtn);
 
     const foot = h('div', { class: 'atlas-ai-foot' }, [h('div', { class: 'atlas-ai-in' }, [ta, send]), meta]);
 
     // 输入框随内容长高
     ta.addEventListener('input', grow);
     return foot;
-  }
-
-  function showPreview() {
-    const d = buildDigest();
-    const text = d.ok ? JSON.stringify(d.profile, null, 1) : '（没读到数据）';
-    const box = h('div', { class: 'atlas-ai-msg' }, [
-      h('div', { class: 'who', text: '将发送给模型的内容' }),
-      h('div', { class: 'tx', text: '这段 JSON 会作为上下文随你的提问一起发出。除此之外不发送任何东西。' }),
-    ]);
-    const det = h('details', { class: 'atlas-ai-prev', open: 'open' });
-    det.append(h('summary', { text: '展开 / 收起（' + text.length + ' 字符）' }));
-    det.append(h('pre', { text }));
-    box.append(det);
-    root.body.append(box);
-    root.body.scrollTop = root.body.scrollHeight;
   }
 
   // ── 提问主流程 ──────────────────────────────────────────────────────────
@@ -812,8 +874,10 @@
 
     const userMsg = text;
     history.push({ role: 'user', content: userMsg, label: cardTitle ? '「' + cardTitle + '」' : userMsg });
+    saveHistory();
 
-    root.body.append(
+    const feed = root.msgs || root.body;
+    feed.append(
       h('div', { class: 'atlas-ai-msg me' }, [
         h('div', { class: 'who', text: '你' }),
         h('div', { class: 'tx', text: cardTitle ? '「' + cardTitle + '」' : userMsg }),
@@ -825,7 +889,7 @@
       h('div', { class: 'tx atlas-ai-cur', text: '' }),
     ]);
     const tx = msgWrap.querySelector('.tx');
-    root.body.append(msgWrap);
+    feed.append(msgWrap);
     root.body.scrollTop = root.body.scrollHeight;
 
     const sendBtn = root.panel.querySelector('.atlas-ai-send');
@@ -858,11 +922,14 @@
       }
       tx.classList.remove('atlas-ai-cur');
       history.push({ role: 'assistant', content: acc || '（空回复）' });
+      saveHistory();
+      ensureClearBtn();
     } catch (e) {
       tx.classList.remove('atlas-ai-cur');
       msgWrap.classList.add('err');
       tx.textContent = '出错了：' + e.message;
       history.pop();
+      saveHistory();
     } finally {
       busy = false;
       if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = '发送'; }
@@ -882,8 +949,12 @@
     open(question) { openPanel(question || ''); },
     /** 主站可以直接推数据进来，比自动扫描更准 */
     setProvider(fn) { window.AtlasAIProvider = fn; digest = null; },
-    /** 清掉对话，保留 Key */
-    reset() { history = []; if (root.body) refreshPanel(); },
-    version: '1.1.2',
+    /** 清掉对话（含本地存档），保留 Key */
+    reset() {
+      history = [];
+      saveHistory();
+      if (root.body) refreshPanel();
+    },
+    version: '1.1.5',
   };
 })();
