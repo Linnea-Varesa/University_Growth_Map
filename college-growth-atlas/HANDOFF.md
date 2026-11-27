@@ -1,397 +1,82 @@
-# 交接说明 · 大学成长地图
+# HANDOFF · 大学成长地图（Qoder Sites 单版本）
 
-面向在校大学生的大学四年记录与规划工作台。单页 HTML + 6 张数据表，数据在线存储、双向同步。
-
-本文件写给**接手开发的人**。`README.md` 是产品说明，本文件讲工程怎么跑、怎么改、哪里有坑。
+2026-11-27 起只保留 Qoder Sites 这条线。WorkBuddy 资料库版（`__SMART_PAGE__.database`
+SDK、6 张数据表、schema/seed/建表工具）与更早的自建服务端（`server.mjs` / `start.cmd` /
+`tools/legacy`）已删除，需要考古去 git 历史（`572db42` 及之前）。
 
 ---
 
-## 0. 先读这段：最大的坑
+## 1. 形态与数据层
 
-**`index.html` 已经完全不调用 `server.mjs` 的接口。**
+- `index.html`：HTML + CSS + 应用 JS 一体，插画内联为 data URI，零 CDN/框架。
+- `atlas-ai-consult.js`：AI 咨询模块，外链引入（IIFE、零依赖、类名全 `atlas-ai-` 前缀）。
+- 数据存浏览器 **localStorage**，无账号体系、无跨设备同步。示例数据内置在页面里，
+  带「示例（请替换）」标记，统计默认剔除。
+- 挂载链路：页面 `bindAI()` 设置 `window.AtlasAIProvider` → `AtlasAI.mount()`。
+  数据桥每次打开面板重新取，改完数据不用重挂。
 
-上一版（`tools/legacy/index-server-mode.html`）通过 `/api/db/*` + SSE 和后端通信；
-现版改为直接调用 WorkBuddy 资料库注入的 `window.__SMART_PAGE__.database`。
+## 2. 发布与账号
 
-后果：
+- 发布记录 `.大学成长地图.qoder.site` 绑定**队友的 Qoder 账号**；线上地址
+  `https://college-growth-atlas-janhbyll1di.qoder.zone/`。
+- 其他账号名下没有这个站点，无法直接更新。更新路径：提交推送 → 队友拉取 → 队友重新发布。
+- 发布至少带 `index.html` + `atlas-ai-consult.js`。Qoder Sites 整目录托管，外链 JS 正常加载。
 
-| 你以为 | 实际 |
+## 3. 已知坑（都踩过）
+
+### 3.1 单 HTML 托管必丢外链 JS
+「只传一个 HTML」的形态（如 WorkBuddy 资料库上传）不会带 `atlas-ai-consult.js`，
+线上 404 → `window.AtlasAI` 不存在，AI 面板与「问AI」全失效。那种形态必须先把模块
+内联进 HTML（内联时 `</script` 字面量要转义成 `<\/script`，否则截断页面）。
+Qoder Sites 整目录托管无此问题。
+
+### 3.2 平台徽标压住悬浮按钮
+Qoder Sites 在右下角注入「Made with Qoder」徽标，挂在 `<html>` 上、DOMContentLoaded
+时注入。v1.1.2 的 `avoidBadge()` 用 MutationObserver 观察 documentElement + 延时兜底，
+检测到就给 body 加 `atlas-ai-with-badge`，悬浮按钮与面板抬高让位。改徽标相关逻辑时
+注意注入时机晚于模块 mount。
+
+### 3.3 改插画要改两处
+`assets/*.svg` 是源文件，`index.html` 里已内联成 data URI（4 处）。改了 SVG 必须
+重新内联，否则页面不变。
+
+### 3.4 ICS 导出
+纯前端生成（Blob 下载）。UTF-8 按 75 字节折行；`TextEncoder` 仅现代浏览器有，
+IE 下折行失效——目标环境是现代浏览器，可接受。
+
+### 3.5 中文文件名进 zip
+Windows 下打中文名接收方解压可能乱码。工程刻意全用 ASCII 文件名，保持这个约定。
+
+## 4. 怎么验证没改坏
+
+```bash
+python tools/check-js.py    # 内联块 + 外链模块语法自检（pip install esprima）
+```
+
+浏览器控制台自检钩子：`window.__APP_STATE__()` 应返回启动状态与数据计数，
+`window.__APP_ERROR__` 应为空。
+
+冒烟清单：
+
+- [ ] 四视图切换正常，空数据不崩（各视图有空态）
+- [ ] 跨月/跨年日期正确（月历切换、倒计时）
+- [ ] 批量删除 + 撤销恢复
+- [ ] ICS 导出（提醒模式、长赛期单事件）
+- [ ] AI 面板开合；未配 Key 时「问AI」预填不丢（v1.1.1）
+- [ ] 线上徽标出现时悬浮按钮让位（v1.1.2）
+- [ ] 窄屏无横向溢出
+
+## 5. 版本
+
+| 版本 | 内容 |
 |---|---|
-| 跑 `start.cmd` → 改数据 → 看 `data/db.json` 变化 | 页面检测不到 SDK，**降级到浏览器 localStorage**；`db.json` 纹丝不动 |
-| `server.mjs` 的 6 表 REST/SSE 是页面后端 | 它只是静态托管 + 一套**没有消费者**的 API |
-| 本地改代码就能看到线上真实数据 | 本地只能看到 localStorage 里的数据（初始为空） |
-
-所以接手后**第一件事是想清楚走哪条路**，别急着改代码。
-
----
-
-## 1. 两条运行路径
-
-### 路径 A：线上资料库模式（当前生产形态）
-
-页面跑在 WorkBuddy 资料库宿主的 iframe 里，平台注入 SDK，数据存云端数据表。
-
-- 需要：WorkBuddy 账号 + 自己的资料库空间
-- 交付形态：一个 `workbuddy.link` 链接 + `workbuddy.cn/space/d/...` 编辑链接
-- **限制**：`DB_IDS` 里 6 个 `databaseId` 属于原作者的空间。你必须在自己的空间重建 6 张表，
-  拿到新 id 替换掉，否则页面读不到数据（建表步骤见 §4）
-- 优点：多设备同步、改完即用、无需运维
-
-### 路径 B：本地开发模式（改代码/调样式用）
-
-- 直接双击 `index.html` → localStorage 模式，功能完整但数据在本地
-- 或 `npm start`（= `node server.mjs`）→ 起本地服务 + 完整 REST/SSE 后端，
-  但**当前 `index.html` 不会用这个后端**，只有 `tools/legacy/index-server-mode.html` 会用
-
-> 想两边统一，看 §7 的第一条 TODO：写个 50 行的本地 SDK 桥接，本地开发就能完全复刻线上行为。
-
----
-
-## 2. 包内结构
-
-```
-college-growth-atlas/
-├── README.md                    产品说明（功能、视图、示例数据规则）
-├── HANDOFF.md                   本文件
-├── package.json                 零依赖，仅声明 node>=18 与 start 脚本
-├── .gitignore                   忽略 db.json / node_modules / 备份
-├── index.html                   生产版页面（资料库 SDK 模式，141 KB 单文件，含内联 AI 模块）
-├── web/
-│   ├── index.html               单文件本地版（localStorage），发布到 Qoder Sites，含内联 AI 模块
-│   └── atlas-ai-consult.js      AI 咨询模块源文件（v1.1.2；web 用外链，资料库版需重跑 inline-ai.py）
-├── schema.json                  6 表结构 + 真实 databaseId + 资料库字段 id
-├── server.mjs                   本地 REST + SSE 服务端（零依赖，Node 18+）
-├── start.cmd                    Windows 双击启动本地服务
-├── data/
-│   └── seed.json               90 条示例数据（建表回填 + 本地初始化都用它）
-├── assets/                     8 个手绘 SVG 源文件（已内联进 index.html，改插画时用）
-└── tools/
-    ├── inline-ai.py             把 atlas-ai-consult.js 内联进两份 HTML（幂等）
-    ├── check-js.py              内联 script 块的语法自检（纯 Python，无需 Node）
-    ├── table-schemas/          6 个纯净建表 payload，直接喂给 create_database
-    │   ├── 01-profile.json     个人档案   8 字段
-    │   ├── 02-experiences.json 大学经历   9 字段
-    │   ├── 03-major.json       专业探索   7 字段
-    │   ├── 04-opportunities.json 个人机会 12 字段
-    │   ├── 05-directions.json  发展方向   7 字段
-    │   └── 06-experiments.json 方向体验卡 7 字段
-    └── legacy/
-        └── index-server-mode.html   改造前版本（对接 server.mjs，仅作参考）
-```
-
-**未包含**（原工程里有但故意剔除）：
-
-- `_recon/`（68 MB）：参考页逆向产物、61 MB 截图、旧调试脚本。含第三方页面源码，
-  不应随工程流转；且结论已被现方案推翻，留着会误导。
-- `data/db.json`：本地服务运行时自动生成，属产物不入库。
-- 原 `index.html.bak-server`：已重命名为 `tools/legacy/index-server-mode.html`，
-  避免根目录出现两个 index 造成误覆盖。
-
----
-
-## 3. 数据契约（改代码必看）
-
-### 3.1 表 → 页面（读）
-
-`db.query` 返回 `{ results, nextCursor, hasMore }`，每条记录是扁平对象。与页面内部结构的差异：
-
-| 项 | 数据表返回 | 页面内部 | 处理点 |
-|---|---|---|---|
-| 主键 | `record_id` | `_id` | `decodeRow()` L994 |
-| 日期 | `"2025-05-10T00:00:00Z"` | `"2025-05-10"` | `decodeRow()` 截断前 10 位 |
-| url | `[{link, text}]` **数组** | `{link, text}` 对象 | `decodeRow()` 压平 + `linkOf()` 兜底 |
-| multi_select | `["研究分析","写作表达"]` | 同左（文本数组） | 直接用 |
-| 空值 | `null` | 字段缺省 | `decodeRow()` 跳过 |
-| select | 选项**文本** | 同左 | 直接用 |
-
-`url` 返回数组这点最容易翻车 —— 直接 `v.link` 会拿到 `undefined`。
-
-### 3.2 页面 → 表（写）
-
-统一走 `encodeProps()` / `encodeValue()`（L961 / L984），按 `getSchema` 拿到的字段类型编码：
-
-| 字段类型 | 写入格式 |
-|---|---|
-| text | `{text: "..."}` |
-| select | `{select: "<optionId>"}` ← 用建表返回的 option id，不用文本 |
-| multi_select | `{multi_select: ["<id1>", "<id2>"]}` |
-| date | `{date: "YYYY-MM-DD"}` |
-| url | `{url: {text: "...", link: "https://..."}}` |
-
-空值在 `encodeProps` 里被剔除 —— 避免 `updateRecord` 时把字段误清空。
-
-### 3.3 分页
-
-`db.query` **单次只返回一页**（`pageSize` 默认 50，上限 200）。`loadAll()`（L1033）做串行翻页，
-带三重熔断：最多 100 页 / 游标必须推进 / 本页非空才继续。
-
-任何人接手后加"全量统计"功能时，别直接 `query` 一把梭，会静默丢数据。
-
-### 3.4 并发限制
-
-- 页面层 20 QPS，单表 30 QPS
-- 所以批量操作（批量删、批量改状态）在代码里都是**串行**的：
-  `dbBulkDelete()` L1177、`bulkPatch()`（`bind()` 内）
-- 别改成 `Promise.all`，会撞 50001
-
----
-
-## 4. 重建资料库 6 张表（路径 A 必需）
-
-假设 `<LIB>` 是 WorkBuddy 资料库 skill 所在目录（形如
-`<WorkBuddy>/resources/.../skills/library`）。
-
-### 步骤 1：建表
-
-```bash
-for f in tools/table-schemas/*.json; do
-  python3 "$LIB/database/create_database.py" --schema "$(cat "$f")"
-done
-```
-
-每条命令输出 `{"database_id": "...", ...}`，记下 6 个 id。
-同时输出里带 `url` 与完整 `properties`（含服务端生成的字段 id 与 option id）。
-
-### 步骤 2：回填 90 条示例数据
-
-`data/seed.json` 是**页面内部格式**，写入前必须转成 PropertyValue（规则见 §3.2）。
-关键转换：`select` 需把文本映射到新表的 option id、`url` 需包成 `{text,link}`、
-日期截断到 10 位、`_id` / `_official` 这类下划线字段要丢掉（表里没有）。
-
-用 `batch_add_database_records.py`，每批 ≤100 条（seed 共 90 条，一次可完）。
-
-> `个人机会.类型` 曾有一个选项缺失：`seed.json` 有「社会实践」，但原工程 schema 没有，
-> 导致该条记录的类型写不进去（静默跳过，不报错）。**本包已在 `04-opportunities.json` 与
-> `schema.json` 两处补齐，无需处理。** 若你后续改字段，注意保持这两处一致。
-
-### 步骤 3：替换页面里的 databaseId
-
-`index.html` L820 `DB_IDS`，6 个值全部换成新 id。**这一处改完才算绑定成功。**
-
-### 步骤 4：上传并绑定
-
-```bash
-python3 "$LIB/page/import_html.py" index.html \
-  --file-name "大学成长地图 · 在线工作台.html" \
-  --databases '[{"id":"<新id1>"},...,{"id":"<新id6>"}]'
-```
-
-`--databases` 会建立页面↔表的关系（六条 relation）。
-
-### 步骤 5：发布
-
-```bash
-python3 "$LIB/page/publish_page.py" --node-id "<nodeId>"
-```
-
----
-
-## 5. 已知坑（都踩过）
-
-### 5.1 `import_html.py` 会静默失败
-
-现象：`{"error": "文件上传到 COS 失败"}`，但用同样 URL 裸 `urllib` PUT 返回 200。
-
-原因：脚本 `_put_to_cos()` 里 `except Exception: return False` 吞掉了真实异常。
-本机实测把异常打出来后是 `ConnectionResetError [WinError 10054]`。
-
-两个附带事实：
-
-- 预签名 URL **一次性**。对同一 URL 重复 PUT 必然连接重置 —— 排查时别误判成网络问题。
-- 绕过方式：`import` 该模块，用带 trace 的版本替换 `_put_to_cos` 再调 `main()`；
-  或自己 `urllib.request` PUT 成功（2xx）后继续走后续接口。
-
-### 5.2 `lint_database_sdk_usage.py` 本机跑不完
-
-3 分钟以上无输出，`exit=124`。脚本是纯本地的（无网络），但在这台机器上就是卡住。
-不要把它当交付门禁，改用 §6 的自建 harness 验证。
-
-### 5.3 `space_api.py` 没有删除节点接口
-
-只有 `create-space / list-* / move-node / node-info / rename-node`。
-传错测试页只能 `unlink` 解绑 + `rename-node` 标记废弃，删不掉。
-
-### 5.4 中文文件名进 zip
-
-Windows 下 `Compress-Archive` 打中文名，接收方解压可能乱码。
-本包刻意全用 ASCII 文件名与目录名，保持这个约定。
-
-### 5.5 改插画要改两处
-
-`assets/*.svg` 是源文件，但 `index.html` 里已经**内联成 base64 data URI**（3 处：
-`pattern-campus` / `illus-campus` / `illus-mountain`）。改了 SVG 必须重新内联，
-否则页面不变。其余 5 个 SVG 当前未被引用。
-
----
-
-## 6. 怎么验证没改坏
-
-生产版依赖宿主注入的 SDK，本地无法直接跑。做法是**用 mock SDK 在 Node 里跑页面脚本**：
-
-1. 从 `index.html` 抽出 `<script>` 内容
-2. 造一个假的 `window.__SMART_PAGE__.database`（实现 getSchema / query / addRecord /
-   updateRecord / deleteRecord / onUpdated，数据来自 `data/seed.json`）
-3. 桩掉 DOM（`document.querySelector` 返回空元素即可）
-4. 执行后用 `window.__APP_STATE__()` 检查：应返回
-   `{online:true, backend:'library', schema:true, counts:{...6 表 90 条}}`
-5. 检查 `console.error` 无输出、`window.__APP_ERROR__` 为空
-
-`window.__APP_STATE__` / `window.__APP_READY__` 是页面内置的自检钩子（启动段末尾），
-也可以直接在浏览器控制台调。
-
-冒烟清单（沿用专家规范铁律 10）：
-
-- [ ] 函数调用链无环（渲染函数之间不互调，统一走 `renderAll()` L2430）
-- [ ] 初始化链路：`loadInitial()` → `bind()` → `renderAll()` → `subscribe()` 顺序正确
-- [ ] DOM 元素齐全（`bind()` 里所有 `$('#...')` 都能命中）
-- [ ] 空数据不崩（6 表全空时各视图有空态）
-- [ ] 跨月/跨年日期正确（`CAL` 的月切换、`daysUntil`）
-- [ ] 事件绑定在渲染后（`bind()` 在首个 `renderAll()` 之前调用，靠事件委托兜住重绘）
-- [ ] 无全局命名冲突（整体在 IIFE 内）
-
----
-
-## 7. 待办 / 建议改动
-
-按价值排序：
-
-1. **本地 SDK 桥接（建议优先做）**
-   `server.mjs` 的 REST 契约与 `__SMART_PAGE__.database` 本来就是同形的
-   （这正是当初的设计意图）。写个 50 行 adapter：本地启动时把
-   `window.__SMART_PAGE__ = {database: fetch 版实现}` 注入页面，
-   本地开发就能完全复刻线上行为，`db.json` 也重新变成真实数据源。
-   这是当前"本地改了看不到线上效果"的唯一解法。
-
-2. **示例数据一键清理**
-   README 提到示例记录带「示例（请替换）」标记且统计自动剔除，但页面里没有"清空所有示例"
-   的入口，只能去数据表里手动删。加个批量删除按钮（记得串行）。
-
-3. **移动端表格**
-   机会库 12 列在窄屏是横向滚动。若要更好的手感，改成卡片列表。
-
-4. **无账号体系**
-   多人协作靠资料库空间的权限继承。若要做"一人一份数据"，需要引入 `db.getUserInfo()`
-   并给记录加 owner 字段 —— 但那会触发登录跳转，谨慎。
-
-5. **发布链接的隐私边界**
-   发布态 `workbuddy.link` 是公开可访问的（任何拿到链接的人都能打开）。
-   页面里是示例数据没问题，但**别把真实隐私数据预填进去**。
-
----
-
-## 8. 版本与回退
-
-| 版本 | 文件 | 数据后端 |
-|---|---|---|
-| 现版 | `index.html` | 资料库 SDK（`__SMART_PAGE__.database`） |
-| 旧版 | `tools/legacy/index-server-mode.html` | 本地 `server.mjs`（`/api/db/*` + SSE） |
-
-回退方式：把 legacy 版覆盖成 `index.html` 即可，但要同步放弃资料库绑定关系
-（页面里没有 SDK 调用时，绑定的 6 张表就成了孤儿）。
-
-两版的 CSS/DOM 结构一致，差异集中在数据层：
-`SDK` 判定、`encodeValue/encodeProps`、`decodeRow`、`loadSchema`、`loadAll`、
-`subscribe`、`db*` 六个写函数、`reload`、以及 ICS 导出（旧版走服务端 `/api/calendar.ics`，
-新版纯前端 `buildCalendarICS`）。
-
----
-
-## 9. 环境
-
-- Node.js ≥ 18（`server.mjs` 用了 `node:` 前缀 ESM，零第三方依赖）
-- Python 3（仅重建数据表 / 上传页面时需要，页面本身不依赖）
-- 浏览器：Chrome / Edge / Safari 现代版本（用了 `TextEncoder`、`Intl` 无）；
-  注意 `TextEncoder` 在 IE 不存在，ICS 折行会失效 —— 目标环境是现代浏览器，可接受
-
-编码统一 UTF-8。Windows 下用 `start.cmd` 启动，别用 GBK 终端直接跑。
-
----
-
-## 10. AI 咨询模块（接入方式与三个坑）
-
-### 10.1 形态
-
-- 源文件 `web/atlas-ai-consult.js`（IIFE、零依赖，CSS 类名全部 `atlas-ai-` 前缀）
-- **`web/index.html` 用外链** `<script src="atlas-ai-consult.js">`（整目录托管，JS 跟着部署）
-- **`index.html` 用内联块** `ATLAS-AI:INLINE-START … END`（单文件上传，外链会 404）
-- 挂载链路：`bindAI()` → 设置 `window.AtlasAIProvider` → `AtlasAI.mount()`
-- 数据桥读的是 `STORE.data`，面板每次打开都重新取，所以改完数据不用重挂
-
-### 10.2 坑一：两种托管对引入方式要求不同（"线上看着没接 AI"的真因）
-
-| 页面 | 托管 | 外链 JS | 做法 |
-|---|---|---|---|
-| `web/index.html` | Qoder Sites，**整个目录**一起部署 | 200 可访问 | 保持外链，改 JS 直接重新部署 |
-| `index.html` | WorkBuddy 资料库，**单文件上传** | 404 | 必须内联，跑 `tools/inline-ai.py` |
-
-当初误判过一次：`.大学成长地图.qoder.site` 里只有 `indexHtml` 一个字段，看着像"只发了
-一个 HTML"，于是断言外链必然 404。实际那只是发布快照，线上 `GET /atlas-ai-consult.js`
-返回 200，模块正常加载。**判断依据应该是这个请求的状态码，不是发布记录长什么样。**
-
-反过来说，如果哪天 Qoder 那边改成单文件发布，`web/index.html` 就会重演一次"没接上"，
-届时给它也跑一遍内联即可（脚本支持外链标签 → 内联块的转换）。
-
-### 10.3 坑二：`</script>` 会截断页面
-
-HTML 解析器不看 JS 注释和字符串，扫到 `</script` 就结束脚本块。模块开头的用法示例里
-本来就有这个字面量，内联时必须转义成 `<\/script` —— `inline-ai.py` 会自动做。
-以后在模块里再写这段字，别写原文。
-
-### 10.4 坑三：数据桥的字段名
-
-`window.AtlasAIProvider()` 返回对象里，**专业探索的 key 是 `majors`**，而页面内部表名是
-`major`。两份页面的 `bindAI()` 都做了映射。模块本身不认字段名（通用压缩），但少喂一块
-数据，回答就会缺一块依据。
-
-### 10.5 无 Key 时的行为
-
-面板先显示配置页（要用户自己的百炼 Key，存 localStorage，浏览器直连）。
-用户在这个阶段点卡片「问AI」，问题会暂存在 `pendingQuestion`，配好 Key 后自动补填 ——
-v1.1.1 才修的，之前会丢。
-
-### 10.6 怎么验证
-
-```bash
-python tools/check-js.py          # 两个内联块语法 OK（纯 Python，不需要 Node）
-```
-
-再往上一步是真实挂载。本机没有 Node，可以直接用 Edge 无头跑：
-
-```powershell
-& "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --headless=new `
-  --virtual-time-budget=9000 --dump-dom `
-  "file:///E:/小项目/校园成长手册/college-growth-atlas/index.html" | Select-String 'atlas-ai-fab'
-```
-
-要读运行时状态，在 `</body>` 前插一段脚本，把 `window.__APP_STATE__()` 和
-`!!window.AtlasAI` 写进 `document.title`，再从 dump 出来的 DOM 里读。资料库版本地会降级到
-localStorage，想看到「问AI」按钮得先用 `data/seed.json` 预填 `college_growth_atlas_v1`。
-
-实测（两份页面都跑过）：`ai:true`、`version:"1.1.1"`、`fab:true`，点「问AI」能打开面板并
-预填该条记录的问题，`__APP_ERROR__` 为 null。
-
-### 10.7 隐私文案别删
-
-"AI 咨询会把你的经历摘要发送给你自己配置的阿里云百炼模型…"这句是产品承诺的一部分：
-主站卖点是"数据只在你浏览器里"，AI 打破了它。README §10、资料库版页脚各有一份，
-面板配置页里还有一份。
-
-### 10.8 平台徽标会压住悬浮按钮
-
-Qoder Sites 部署时会往页面注入一段 57 KB 的水印脚本，生成
-`<qoder-sites-badge id="qoder-sites-watermark">`。它默认贴在右下角，和
-`bottom:22px; right:22px` 的 AI 按钮正好叠在一起（实测徽标矩形
-`[1083,719]-[1230,751]` 把按钮切掉一半）。
-
-处理：`mountFab()` 里 `avoidBadge()` 检测该元素，给 `body` 加上 `atlas-ai-with-badge`，
-CSS 把按钮抬到 `bottom:64px`，给面板补 `padding-bottom:44px`。
-
-两个细节都是踩出来的：
-
-- 徽标挂在 **`document.documentElement`** 上（`document.documentElement.append(host)`），
-  不是 `body`，所以 MutationObserver 观察 `body` 永远不触发；
-- 徽标在 `DOMContentLoaded` 才挂载，晚于 `mount()`，所以除了观察还挂了 2 秒兜底。
-
-验证方法（可复现）：把线上那段 watermark 脚本原样注入本地 `web/index.html` 的
-`</body>` 前，量两个元素的 `getBoundingClientRect()` 是否相交 —— 修好后
-`fabBottom = 64px`、`overlap = false`。
+| v1.0.0 | 队友交付的 AI 模块原始版 |
+| v1.1.0 | 校园绿 × 液态玻璃外观适配 + Qoder 账号登录状态行 |
+| v1.1.1 | 未配 Key 时「问AI」预填问题保留到输入框出现 |
+| v1.1.2 | 检测 Qoder Sites 徽标并让位 |
+
+## 6. 环境
+
+- 浏览器：Chrome / Edge / Safari 现代版本。
+- Python 3 + esprima（仅语法自检用，页面本身不依赖）。
+- 编码统一 UTF-8。

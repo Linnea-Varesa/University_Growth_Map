@@ -1,7 +1,7 @@
-# 大学成长地图 · 资料库在线工作台
+# 大学成长地图 · 在线工作台
 
-面向在校大学生的大学四年记录与规划工作台。**在线 HTML 页面 + 6 张资料库数据表**，
-数据在线存储、支持双向同步，多设备打开即用。
+面向在校大学生的大学四年记录与规划工作台。**单页应用，数据存浏览器 localStorage**，
+打开即用，零后端、零外部依赖。托管于 Qoder Sites。
 
 ---
 
@@ -9,62 +9,26 @@
 
 | 用途 | 链接 |
 |---|---|
-| 在线使用（发给别人 / 手机打开） | https://workbuddy.link/p/jcXuEfLcfqt3lzip1L93iA |
-| 编辑态（协作修改） | https://www.workbuddy.cn/space/d/jcXuEfLcfqt3lzip1L93iA |
+| 在线使用（发给别人 / 手机打开） | https://college-growth-atlas-janhbyll1di.qoder.zone/ |
 
-页面由 WorkBuddy 资料库托管，数据存在资料库数据表里。
-**开两个浏览器窗口，任一侧改动，另一侧会自动刷新。**
-
----
-
-## 二、6 张数据表（资料库空间）
-
-| # | 表 | databaseId | 字段数 | 示例数据 | 访问链接 |
-|---|---|---|---|---|---|
-| ① | 个人档案 | `imOSHsrTFlNK4Gk7lleGXr` | 8 | 2 | [打开](https://www.workbuddy.cn/space/d/imOSHsrTFlNK4Gk7lleGXr) |
-| ② | 大学经历 | `0H24vBWYozjaxlv8Vfl54y` | 9 | 22 | [打开](https://www.workbuddy.cn/space/d/0H24vBWYozjaxlv8Vfl54y) |
-| ③ | 专业探索 | `uqvllWONRY2vqLfgc4PRg8` | 7 | 12 | [打开](https://www.workbuddy.cn/space/d/uqvllWONRY2vqLfgc4PRg8) |
-| ④ | 个人机会 | `bjCxYuvH8Iej57GJ3qy3YZ` | 12 | 26 | [打开](https://www.workbuddy.cn/space/d/bjCxYuvH8Iej57GJ3qy3YZ) |
-| ⑤ | 发展方向 | `clMoTCPppSCS4IdJVTSYFT` | 7 | 12 | [打开](https://www.workbuddy.cn/space/d/clMoTCPppSCS4IdJVTSYFT) |
-| ⑥ | 方向体验卡 | `LSCerNXACZkVH0vkWSAGCX` | 7 | 16 | [打开](https://www.workbuddy.cn/space/d/LSCerNXACZkVH0vkWSAGCX) |
-| | | | **总计** | **90** | |
-
-`schema.json` 记录了每张表的完整结构与真实字段 id。
+数据存在**各自浏览器**的 localStorage 里：换设备/换浏览器不互通，清浏览器数据会丢失。
+页面右上角指示器显示「本地数据 · 已保存在此浏览器」。
 
 ---
 
-## 三、数据存储与双向同步的实现
+## 二、文件结构
 
-页面运行在资料库宿主中，由平台注入 `window.__SMART_PAGE__.database`：
-
-```js
-db.getSchema({ databaseId })                    // 取字段类型
-db.query({ databaseId, pageSize, startCursor }) // 分页拉取
-db.addRecord / updateRecord / deleteRecord       // 增改删
-db.onUpdated(handler)                             // 订阅数据变更
+```
+index.html              页面本体（HTML + CSS + 应用 JS，插画已内联为 data URI）
+atlas-ai-consult.js     AI 咨询模块（外链引入，发布时必须随页面一起上传）
+assets/*.svg            插画源文件（改插画后需重新内联进 index.html）
+tools/check-js.py       JS 语法自检（纯 Python esprima，无需 Node）
+schema 相关 / server.mjs / WorkBuddy 资料库版已于 2026-11-27 移除，只保留 Qoder Sites 这一条线
 ```
 
-- **页面 → 数据表**：所有增删改直接写数据表，实时落库
-- **数据表 → 页面**：`onUpdated` 收到变更通知后，300ms 防抖重新拉取受影响表并重绘
-- **在线状态**：右上角指示器显示「资料库在线存储 · 已同步」
-- **离线兜底**：宿主 SDK 缺失时（如以 `file://` 打开）自动降级为浏览器本地存储，页面仍可用
-
-### 与旧版实现的差异
-
-| 项 | 旧版（自建服务端） | 现版（资料库） |
-|---|---|---|
-| 存储 | 本地 `data/db.json` | 资料库数据表（云端） |
-| 接口 | 自建 `/api/db/*` REST | `__SMART_PAGE__.database` |
-| 同步 | 自建 SSE `/api/events` | `db.onUpdated` |
-| 运行 | 需 `node server.mjs` | 打开链接即用 |
-| ICS 导出 | 服务端生成 | 纯前端生成（Blob 下载） |
-
-`server.mjs` 与 `start.cmd` 保留作为**离线单文件模式**的参考实现，线上版本不依赖它们。
-`index.html.bak-server` 是改造前的原始版本。
-
 ---
 
-## 四、四个视图
+## 三、四个视图
 
 ### 总览
 - **能力画像**：能力标签占比条，从真实经历聚合；示例记录默认剔除
@@ -83,7 +47,6 @@ db.onUpdated(handler)                             // 订阅数据变更
   （批量加入清单 / 移出 / 改状态 / 删除）
 - **月历视图**：按日聚合，点日期看当天详情；长赛期只在首尾各落一次
 - **报名截止倒计时**：未过期的排前面，7 天内高亮
-- **考试竞赛日历**：见下节
 
 ### 未来
 - **方向卡片墙**：所需能力、已有基础、关键阶段、准备事项、相邻领域、体验建议、关联体验卡数
@@ -92,7 +55,7 @@ db.onUpdated(handler)                             // 订阅数据变更
 
 ---
 
-## 五、内置考试竞赛日历
+## 四、内置考试竞赛日历
 
 预置 **14 项公开日程**，每项含名称、日期、来源、官方链接、报名说明：
 
@@ -109,7 +72,7 @@ MathorCup · 「认证杯」· 「泰迪杯」· 国家公派/校际交换 · �
 
 ---
 
-## 六、示例数据规则
+## 五、示例数据规则
 
 - 全部非公开日程记录都带 `示例（请替换）` 标记；
 - **统计自动剔除**：能力画像、经历总数等都只统计真实记录；
@@ -118,72 +81,65 @@ MathorCup · 「认证杯」· 「泰迪杯」· 国家公派/校际交换 · �
 - 唯一例外是 14 条**考试竞赛公开日程**——它们是真实公开信息（不是示例），
   以 `官方` 角标区分，可「加入个人清单」。
 
-> 建议：先在数据表里把示例记录删掉或改成自己的真实内容，页面会立即同步。
-
 ---
 
-## 七、视觉
+## 六、视觉
 
-- 清新校园插画风：3 个手绘 SVG（校园全景、山丘分隔带、可平铺纹理）已内联为 data URI
+- 清新校园插画风：手绘 SVG（校园全景、山丘分隔带、可平铺纹理等）已内联为 data URI
 - 绿色主色调（`#2f6b4f` / `#3f7d5a` / `#508565` / `#a8cdb8`），金色与深蓝作点缀
 - 卡片式信息分区，顶部导航切换四视图
 - PC 与移动端自适应（断点 1000 / 720 / 420px，移动端无横向溢出）
 - 无障碍：语义化按钮、`aria-label`、日历单元格带日期与事项数播报
-- **零外部依赖**：单文件，无任何 CDN / 框架 / 字体外链
+- **零外部依赖**：无任何 CDN / 框架 / 字体外链
 
 ---
 
-## 八、验证结果
-
-| 项目 | 结果 |
-|---|---|
-| 数据表建表 | 6 / 6 成功（50 个字段） |
-| 种子数据落库 | **90 / 90** 条，逐表复核条数一致 |
-| 上传后文件校验 | 6 个 databaseId 正确、`__SMART_PAGE__` 引用完整、零 `/api/` 残留、3 个 SVG 已内联 |
-| 发布态一致性 | 编辑态与发布态 SHA256 一致 |
-| 数据表读写往返 | 真实写入 → 回读 → 还原 通过 |
-| 页面运行时（mock SDK） | `backend=library`，6 表 90 条全量加载，**0 运行时错误** |
-| PropertyValue 编解码 | select/multi_select/date/url/text 全类型正确，空值自动剔除 |
-| ICS 生成 | 48 VEVENT / 96 VALARM，CRLF 规范，75 字节折行合规，公开日程筛选与无提醒模式正常 |
-
----
-
-## 九、本地开发
-
-线上版无需任何服务端。若要本地调试：
-
-```bash
-# 直接打开（自动降级为本地存储模式）
-start index.html
-
-# 或用原来的自建服务端跑旧链路（server.mjs 保留）
-node server.mjs     # 然后打开 http://127.0.0.1:8787/
-```
-
----
-
-## 十、AI 咨询（可选，自带 Key）
+## 七、AI 咨询（可选，自带 Key）
 
 右下角的「AI 咨询」是一个独立面板：把你记录的经历、方向、体验卡、机会压成一份摘要，
 交给你自己配置的阿里云百炼模型，换回针对这个学生的建议。
 
 - **6 张咨询卡**：本周聚焦 / 能力缺口 / 经历提炼 / 方向排序 / 机会取舍 / 专业探索
 - **卡片直达**：经历、机会、方向、体验卡、专业每一条记录上都有「问AI」，点开即带着这条记录提问
+  （首次未配 Key 时点「问AI」，预填问题会保留到输入框出现——v1.1.1 修复）
 - **用自己的 Key**：面板里填一次百炼 API Key（存本机 localStorage，浏览器直连，无后端、无中转）
 - **隐私可验证**：面板底部「看清楚要发什么」会展开将要发送的 JSON 摘要，确认后才发
 - **不填 Key 不影响其它功能**：面板停留在配置页，记录、日历、ICS 导出全部照常
 
-模块源文件是 `web/atlas-ai-consult.js`。引入方式按托管形态分两种：
+模块源文件是根目录 `atlas-ai-consult.js`，页面以外链 `<script src="atlas-ai-consult.js">` 引入。
 
-| 页面 | 托管 | AI 引入方式 |
-|---|---|---|
-| `web/index.html`（Qoder Sites） | 整目录托管 | 外链 `<script src="atlas-ai-consult.js">`，改完 JS 直接重新部署 |
-| `index.html`（WorkBuddy 资料库） | 单文件上传 | **必须内联**，改完 JS 要跑 `python tools/inline-ai.py` |
+> **发布注意**：Qoder Sites 整目录托管会把外链 JS 一起上传，正常工作。
+> 但任何「只传一个 HTML」的托管形态都会丢掉这个文件，AI 面板整体失效——
+> 那种形态必须先把模块内联进 HTML。
+
+Qoder Sites 部署时会在右下角注入「Made with Qoder」徽标，模块检测到后自动把
+悬浮按钮与面板抬高让位（v1.1.2）。
+
+---
+
+## 八、本地开发与验证
 
 ```bash
-python tools/inline-ai.py    # 仅重新内联资料库版（幂等）
-python tools/check-js.py     # 内联块语法自检（无需 Node）
+# 直接打开即可（数据存浏览器 localStorage）
+start index.html
+
+# 语法自检（需 python -m pip install esprima）
+python tools/check-js.py
 ```
 
-另外：Qoder Sites 部署时会在右下角注入「Made with Qoder」徽标，模块会检测到并自动把
-悬浮按钮与面板抬高 42px 让位。
+页面内置自检钩子，浏览器控制台可调：
+
+- `window.__APP_READY__` / `window.__APP_STATE__()`：启动状态与数据计数
+- `window.__APP_ERROR__`：运行时错误收集，应为空
+
+冒烟清单：四视图切换、空数据不崩、跨月/跨年日期、批量删除与撤销、ICS 导出、
+AI 面板开合与「问AI」预填、窄屏无横向溢出。
+
+---
+
+## 九、发布
+
+站点发布在 Qoder Sites（发布记录见 `.大学成长地图.qoder.site`，绑定队友账号）。
+更新流程：改代码 → 提交推送 → 由站点所有者拉取后重新发布，链接不变。
+
+发布内容至少包含 `index.html` 与 `atlas-ai-consult.js` 两个文件。

@@ -1,17 +1,11 @@
 {
   "name": "college-growth-atlas",
-  "version": "1.0.0",
+  "version": "1.1.2",
   "private": true,
-  "description": "大学成长地图 · 大学生四年记录与规划工作台（资料库在线 page + 6 张数据表）",
-  "engines": {
-    "node": ">=18"
-  },
+  "description": "大学成长地图 · 大学生四年记录与规划工作台（Qoder Sites 单页应用，数据存浏览器 localStorage）",
   "scripts": {
-    "start": "node server.mjs",
-    "serve": "node server.mjs",
-    "inline-ai": "python tools/inline-ai.py",
     "check:js": "python tools/check-js.py"
   },
-  "keywords": ["workspace", "college", "workbuddy", "library-page"],
+  "keywords": ["college", "qoder-sites", "localStorage"],
   "license": "UNLICENSED"
 }
