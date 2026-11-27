@@ -1,5 +1,6 @@
 /* ══════════════════════════════════════════════════════════════════════════
- * 大学成长地图 · AI 咨询模块（atlas-ai-consult.js）v1.1.0
+ * 大学成长地图 · AI 咨询模块（atlas-ai-consult.js）v1.1.1
+ * v1.1.1：首次未配 Key 时点「问AI」，预填问题不再丢失（等输入框出现后补填）。
  * 基于队友交付的 v1.0.0 适配：校园绿 × 液态玻璃外观（消费主站设计变量，
  * 自动跟随昼夜主题），并加入 Qoder 账号登录状态行。
  *
@@ -10,8 +11,10 @@
  *   4. 隐私可验证：发出去的内容先给你看一眼，确认了才发
  *
  * 用法
- *   <script src="atlas-ai-consult.js"></script>
- *   <script>AtlasAI.mount();</script>
+ *   1) 单独引入：本文件作为外链脚本加载后调 AtlasAI.mount()
+ *   2) 本项目实际用法：由 tools/inline-ai.py 内联进两份单文件页面，
+ *      页面的 bindAI() 负责设置 window.AtlasAIProvider 并 mount
+ *      （单文件发布不会带上同目录的 JS，所以必须内联，见 HANDOFF §10）
  *
  *   想让它精确读到主站数据，二选一：
  *   a) 主站暴露一个函数：
@@ -108,6 +111,7 @@
   let conf = null;               // { key, base, regionLabel, model }
   let digest = null;             // 摘要对象
   let history = [];              // { role, content }
+  let pendingQuestion = '';      // 面板还没建出输入框时先记住要预填的问题
   let busy = false;
   let acct = { status: 'idle', name: '' };  // Qoder 登录状态
   const root = {};
@@ -527,6 +531,7 @@
   // ── 面板 ────────────────────────────────────────────────────────────────
   function openPanel(prefill) {
     if (root.panel) { if (prefill) setInput(prefill); return; }
+    if (prefill) pendingQuestion = prefill;
     const mask = h('div', { class: 'atlas-ai-mask', onclick: closePanel });
     const body = h('div', { class: 'atlas-ai-body' });
     const panel = h('aside', { class: 'atlas-ai-panel' }, [
@@ -554,6 +559,7 @@
 
   function setInput(t) {
     if (root.input) { root.input.value = t; root.input.focus(); }
+    else pendingQuestion = t;   // 还在配 Key 阶段，先记住，输入框出现时再填
   }
 
   function refreshPanel() {
@@ -733,6 +739,14 @@
     const send = h('button', { class: 'atlas-ai-send', text: '发送' });
     root.input = ta;
 
+    const grow = () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight || 44, 120) + 'px'; };
+    // 首次配 Key 之前点过「问AI」：问题存在 pendingQuestion 里，这里补填
+    if (pendingQuestion) {
+      ta.value = pendingQuestion;
+      pendingQuestion = '';
+      grow();
+    }
+
     const askFree = () => {
       const t = ta.value.trim();
       if (!t || busy) return;
@@ -753,10 +767,7 @@
     const foot = h('div', { class: 'atlas-ai-foot' }, [h('div', { class: 'atlas-ai-in' }, [ta, send]), meta]);
 
     // 输入框随内容长高
-    ta.addEventListener('input', () => {
-      ta.style.height = 'auto';
-      ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
-    });
+    ta.addEventListener('input', grow);
     return foot;
   }
 
@@ -855,6 +866,6 @@
     setProvider(fn) { window.AtlasAIProvider = fn; digest = null; },
     /** 清掉对话，保留 Key */
     reset() { history = []; if (root.body) refreshPanel(); },
-    version: '1.1.0',
+    version: '1.1.1',
   };
 })();

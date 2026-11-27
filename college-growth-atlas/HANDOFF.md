@@ -55,7 +55,10 @@ college-growth-atlas/
 ├── HANDOFF.md                   本文件
 ├── package.json                 零依赖，仅声明 node>=18 与 start 脚本
 ├── .gitignore                   忽略 db.json / node_modules / 备份
-├── index.html                   生产版页面（资料库 SDK 模式，141 KB 单文件）
+├── index.html                   生产版页面（资料库 SDK 模式，141 KB 单文件，含内联 AI 模块）
+├── web/
+│   ├── index.html               单文件本地版（localStorage），发布到 Qoder Sites，含内联 AI 模块
+│   └── atlas-ai-consult.js      AI 咨询模块源文件（v1.1.1，改完必须重跑 tools/inline-ai.py）
 ├── schema.json                  6 表结构 + 真实 databaseId + 资料库字段 id
 ├── server.mjs                   本地 REST + SSE 服务端（零依赖，Node 18+）
 ├── start.cmd                    Windows 双击启动本地服务
@@ -63,6 +66,8 @@ college-growth-atlas/
 │   └── seed.json               90 条示例数据（建表回填 + 本地初始化都用它）
 ├── assets/                     8 个手绘 SVG 源文件（已内联进 index.html，改插画时用）
 └── tools/
+    ├── inline-ai.py             把 atlas-ai-consult.js 内联进两份 HTML（幂等）
+    ├── check-js.py              内联 script 块的语法自检（纯 Python，无需 Node）
     ├── table-schemas/          6 个纯净建表 payload，直接喂给 create_database
     │   ├── 01-profile.json     个人档案   8 字段
     │   ├── 02-experiences.json 大学经历   9 字段
@@ -299,3 +304,75 @@ Windows 下 `Compress-Archive` 打中文名，接收方解压可能乱码。
   注意 `TextEncoder` 在 IE 不存在，ICS 折行会失效 —— 目标环境是现代浏览器，可接受
 
 编码统一 UTF-8。Windows 下用 `start.cmd` 启动，别用 GBK 终端直接跑。
+
+---
+
+## 10. AI 咨询模块（接入方式与三个坑）
+
+### 10.1 形态
+
+- 源文件 `web/atlas-ai-consult.js`（IIFE、零依赖，CSS 类名全部 `atlas-ai-` 前缀）
+- 两份 HTML 里各有一段 `ATLAS-AI:INLINE-START … END` 的内联块，就是它的拷贝
+- 挂载链路：`bindAI()` → 设置 `window.AtlasAIProvider` → `AtlasAI.mount()`
+- 数据桥读的是 `STORE.data`，面板每次打开都重新取，所以改完数据不用重挂
+
+### 10.2 坑一：外链 JS 在单文件发布里必然丢（"线上看着没接 AI"的真因）
+
+Qoder Sites 的发布记录（`.大学成长地图.qoder.site`）里只有 `indexHtml` 一个字段，
+WorkBuddy 资料库页面也是一个 HTML 上传。上一版写的是
+`<script src="atlas-ai-consult.js">`，发布后这个请求就是 404：`window.AtlasAI` 不存在，
+右下角没有悬浮按钮，点「问AI」只会提示「模块未加载」。
+
+**所以改完模块必须重跑：**
+
+```bash
+python tools/inline-ai.py
+```
+
+脚本靠 `ATLAS-AI:INLINE-START/END` 标记定位，幂等；首次没有标记时会把外链标签
+（`web/` 版）或应用脚本前的空位（资料库版）替换成内联块。
+
+### 10.3 坑二：`</script>` 会截断页面
+
+HTML 解析器不看 JS 注释和字符串，扫到 `</script` 就结束脚本块。模块开头的用法示例里
+本来就有这个字面量，内联时必须转义成 `<\/script` —— `inline-ai.py` 会自动做。
+以后在模块里再写这段字，别写原文。
+
+### 10.4 坑三：数据桥的字段名
+
+`window.AtlasAIProvider()` 返回对象里，**专业探索的 key 是 `majors`**，而页面内部表名是
+`major`。两份页面的 `bindAI()` 都做了映射。模块本身不认字段名（通用压缩），但少喂一块
+数据，回答就会缺一块依据。
+
+### 10.5 无 Key 时的行为
+
+面板先显示配置页（要用户自己的百炼 Key，存 localStorage，浏览器直连）。
+用户在这个阶段点卡片「问AI」，问题会暂存在 `pendingQuestion`，配好 Key 后自动补填 ——
+v1.1.1 才修的，之前会丢。
+
+### 10.6 怎么验证
+
+```bash
+python tools/check-js.py          # 两个内联块语法 OK（纯 Python，不需要 Node）
+```
+
+再往上一步是真实挂载。本机没有 Node，可以直接用 Edge 无头跑：
+
+```powershell
+& "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --headless=new `
+  --virtual-time-budget=9000 --dump-dom `
+  "file:///E:/小项目/校园成长手册/college-growth-atlas/index.html" | Select-String 'atlas-ai-fab'
+```
+
+要读运行时状态，在 `</body>` 前插一段脚本，把 `window.__APP_STATE__()` 和
+`!!window.AtlasAI` 写进 `document.title`，再从 dump 出来的 DOM 里读。资料库版本地会降级到
+localStorage，想看到「问AI」按钮得先用 `data/seed.json` 预填 `college_growth_atlas_v1`。
+
+实测（两份页面都跑过）：`ai:true`、`version:"1.1.1"`、`fab:true`，点「问AI」能打开面板并
+预填该条记录的问题，`__APP_ERROR__` 为 null。
+
+### 10.7 隐私文案别删
+
+"AI 咨询会把你的经历摘要发送给你自己配置的阿里云百炼模型…"这句是产品承诺的一部分：
+主站卖点是"数据只在你浏览器里"，AI 打破了它。README §10、资料库版页脚各有一份，
+面板配置页里还有一份。
