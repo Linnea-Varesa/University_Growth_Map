@@ -1,5 +1,6 @@
 /* ══════════════════════════════════════════════════════════════════════════
- * 大学成长地图 · AI 咨询模块（atlas-ai-consult.js）v1.1.1
+ * 大学成长地图 · AI 咨询模块（atlas-ai-consult.js）v1.1.2
+ * v1.1.2：Qoder Sites 部署会注入右下角徽标，检测到就把悬浮按钮与面板抬高让位。
  * v1.1.1：首次未配 Key 时点「问AI」，预填问题不再丢失（等输入框出现后补填）。
  * 基于队友交付的 v1.0.0 适配：校园绿 × 液态玻璃外观（消费主站设计变量，
  * 自动跟随昼夜主题），并加入 Qoder 账号登录状态行。
@@ -324,6 +325,9 @@
     transition:transform .22s cubic-bezier(.3,1.5,.45,1),box-shadow .22s}
   .atlas-ai-fab:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 12px 28px -8px color-mix(in srgb,var(--site-accent,#3f7d5a) 75%,transparent),inset 0 1px 0 rgba(255,255,255,.35)}
   .atlas-ai-fab:active{transform:scale(.93)}
+  /* Qoder Sites 部署时会往右下角注入「Made with Qoder」徽标，正好压住按钮：整体让位 */
+  body.atlas-ai-with-badge .atlas-ai-fab{bottom:64px}
+  body.atlas-ai-with-badge .atlas-ai-panel{padding-bottom:44px}
   .atlas-ai-fab svg{width:16px;height:16px}
 
   .atlas-ai-mask{position:fixed;inset:0;background:rgba(8,18,12,.4);z-index:9999;backdrop-filter:blur(3px);
@@ -526,6 +530,20 @@
       '<span>AI 咨询</span>';
     document.body.append(fab);
     root.fab = fab;
+    avoidBadge();
+    // 徽标由部署平台在 DOMContentLoaded 时注入，而且挂在 <html> 上（不是 body），
+    // 所以观察 documentElement，再补一个延时兜底
+    try {
+      new MutationObserver(avoidBadge).observe(document.documentElement, { childList: true });
+      setTimeout(avoidBadge, 2000);
+    } catch (_) {}
+  }
+
+  // 右下角有平台徽标时给按钮和面板让位，避免叠在一起
+  function avoidBadge() {
+    if (document.body.classList.contains('atlas-ai-with-badge')) return;
+    if (!document.getElementById('qoder-sites-watermark')) return;
+    document.body.classList.add('atlas-ai-with-badge');
   }
 
   // ── 面板 ────────────────────────────────────────────────────────────────
@@ -866,6 +884,6 @@
     setProvider(fn) { window.AtlasAIProvider = fn; digest = null; },
     /** 清掉对话，保留 Key */
     reset() { history = []; if (root.body) refreshPanel(); },
-    version: '1.1.1',
+    version: '1.1.2',
   };
 })();

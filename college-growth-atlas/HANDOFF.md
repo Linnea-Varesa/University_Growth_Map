@@ -58,7 +58,7 @@ college-growth-atlas/
 ├── index.html                   生产版页面（资料库 SDK 模式，141 KB 单文件，含内联 AI 模块）
 ├── web/
 │   ├── index.html               单文件本地版（localStorage），发布到 Qoder Sites，含内联 AI 模块
-│   └── atlas-ai-consult.js      AI 咨询模块源文件（v1.1.1，改完必须重跑 tools/inline-ai.py）
+│   └── atlas-ai-consult.js      AI 咨询模块源文件（v1.1.2；web 用外链，资料库版需重跑 inline-ai.py）
 ├── schema.json                  6 表结构 + 真实 databaseId + 资料库字段 id
 ├── server.mjs                   本地 REST + SSE 服务端（零依赖，Node 18+）
 ├── start.cmd                    Windows 双击启动本地服务
@@ -312,25 +312,24 @@ Windows 下 `Compress-Archive` 打中文名，接收方解压可能乱码。
 ### 10.1 形态
 
 - 源文件 `web/atlas-ai-consult.js`（IIFE、零依赖，CSS 类名全部 `atlas-ai-` 前缀）
-- 两份 HTML 里各有一段 `ATLAS-AI:INLINE-START … END` 的内联块，就是它的拷贝
+- **`web/index.html` 用外链** `<script src="atlas-ai-consult.js">`（整目录托管，JS 跟着部署）
+- **`index.html` 用内联块** `ATLAS-AI:INLINE-START … END`（单文件上传，外链会 404）
 - 挂载链路：`bindAI()` → 设置 `window.AtlasAIProvider` → `AtlasAI.mount()`
 - 数据桥读的是 `STORE.data`，面板每次打开都重新取，所以改完数据不用重挂
 
-### 10.2 坑一：外链 JS 在单文件发布里必然丢（"线上看着没接 AI"的真因）
+### 10.2 坑一：两种托管对引入方式要求不同（"线上看着没接 AI"的真因）
 
-Qoder Sites 的发布记录（`.大学成长地图.qoder.site`）里只有 `indexHtml` 一个字段，
-WorkBuddy 资料库页面也是一个 HTML 上传。上一版写的是
-`<script src="atlas-ai-consult.js">`，发布后这个请求就是 404：`window.AtlasAI` 不存在，
-右下角没有悬浮按钮，点「问AI」只会提示「模块未加载」。
+| 页面 | 托管 | 外链 JS | 做法 |
+|---|---|---|---|
+| `web/index.html` | Qoder Sites，**整个目录**一起部署 | 200 可访问 | 保持外链，改 JS 直接重新部署 |
+| `index.html` | WorkBuddy 资料库，**单文件上传** | 404 | 必须内联，跑 `tools/inline-ai.py` |
 
-**所以改完模块必须重跑：**
+当初误判过一次：`.大学成长地图.qoder.site` 里只有 `indexHtml` 一个字段，看着像"只发了
+一个 HTML"，于是断言外链必然 404。实际那只是发布快照，线上 `GET /atlas-ai-consult.js`
+返回 200，模块正常加载。**判断依据应该是这个请求的状态码，不是发布记录长什么样。**
 
-```bash
-python tools/inline-ai.py
-```
-
-脚本靠 `ATLAS-AI:INLINE-START/END` 标记定位，幂等；首次没有标记时会把外链标签
-（`web/` 版）或应用脚本前的空位（资料库版）替换成内联块。
+反过来说，如果哪天 Qoder 那边改成单文件发布，`web/index.html` 就会重演一次"没接上"，
+届时给它也跑一遍内联即可（脚本支持外链标签 → 内联块的转换）。
 
 ### 10.3 坑二：`</script>` 会截断页面
 
@@ -376,3 +375,23 @@ localStorage，想看到「问AI」按钮得先用 `data/seed.json` 预填 `coll
 "AI 咨询会把你的经历摘要发送给你自己配置的阿里云百炼模型…"这句是产品承诺的一部分：
 主站卖点是"数据只在你浏览器里"，AI 打破了它。README §10、资料库版页脚各有一份，
 面板配置页里还有一份。
+
+### 10.8 平台徽标会压住悬浮按钮
+
+Qoder Sites 部署时会往页面注入一段 57 KB 的水印脚本，生成
+`<qoder-sites-badge id="qoder-sites-watermark">`。它默认贴在右下角，和
+`bottom:22px; right:22px` 的 AI 按钮正好叠在一起（实测徽标矩形
+`[1083,719]-[1230,751]` 把按钮切掉一半）。
+
+处理：`mountFab()` 里 `avoidBadge()` 检测该元素，给 `body` 加上 `atlas-ai-with-badge`，
+CSS 把按钮抬到 `bottom:64px`，给面板补 `padding-bottom:44px`。
+
+两个细节都是踩出来的：
+
+- 徽标挂在 **`document.documentElement`** 上（`document.documentElement.append(host)`），
+  不是 `body`，所以 MutationObserver 观察 `body` 永远不触发；
+- 徽标在 `DOMContentLoaded` 才挂载，晚于 `mount()`，所以除了观察还挂了 2 秒兜底。
+
+验证方法（可复现）：把线上那段 watermark 脚本原样注入本地 `web/index.html` 的
+`</body>` 前，量两个元素的 `getBoundingClientRect()` 是否相交 —— 修好后
+`fabBottom = 64px`、`overlap = false`。

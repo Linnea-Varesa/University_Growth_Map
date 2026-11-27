@@ -173,9 +173,17 @@ node server.mjs     # 然后打开 http://127.0.0.1:8787/
 - **隐私可验证**：面板底部「看清楚要发什么」会展开将要发送的 JSON 摘要，确认后才发
 - **不填 Key 不影响其它功能**：面板停留在配置页，记录、日历、ICS 导出全部照常
 
-模块源文件是 `web/atlas-ai-consult.js`，**发布时必须内联进 HTML**（单文件发布不会带上外链 JS）：
+模块源文件是 `web/atlas-ai-consult.js`。引入方式按托管形态分两种：
+
+| 页面 | 托管 | AI 引入方式 |
+|---|---|---|
+| `web/index.html`（Qoder Sites） | 整目录托管 | 外链 `<script src="atlas-ai-consult.js">`，改完 JS 直接重新部署 |
+| `index.html`（WorkBuddy 资料库） | 单文件上传 | **必须内联**，改完 JS 要跑 `python tools/inline-ai.py` |
 
 ```bash
-python tools/inline-ai.py    # 改完模块后重新内联两份页面（幂等）
+python tools/inline-ai.py    # 仅重新内联资料库版（幂等）
 python tools/check-js.py     # 内联块语法自检（无需 Node）
 ```
+
+另外：Qoder Sites 部署时会在右下角注入「Made with Qoder」徽标，模块会检测到并自动把
+悬浮按钮与面板抬高 42px 让位。

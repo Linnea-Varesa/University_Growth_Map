@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""把 web/atlas-ai-consult.js 内联进两份单文件页面。
+"""把 web/atlas-ai-consult.js 内联进资料库版 index.html。
 
-为什么要内联：这份页面是「单文件发布」——Qoder Sites 的发布记录里只有
-一个 indexHtml 字段，WorkBuddy 资料库页面也是一个 HTML 上传。同目录下
-的外链 `<script src="atlas-ai-consult.js">` 不会跟着发布，线上会 404，
-`window.AtlasAI` 不存在，AI 面板与「问AI」按钮全部失效。
+为什么只有这一份需要内联：
 
-改完 `web/atlas-ai-consult.js` 后重跑本脚本即可（幂等，靠 ATLAS-AI 标记定位）。
+- `index.html`（WorkBuddy 资料库版）是**单文件上传**：只传这一个 HTML，
+  同目录的外链 JS 传不上去，线上必然 404，所以要内联。
+- `web/index.html`（Qoder Sites 版）是**整个目录托管**，`atlas-ai-consult.js`
+  会跟着一起部署（实测 `GET /atlas-ai-consult.js` 返回 200），所以保持外链，
+  改模块时不用再跑本脚本，也不会出现「改源文件、页面里还是旧拷贝」。
+
+改完 `web/atlas-ai-consult.js` 后跑一次本脚本即可（幂等，靠 ATLAS-AI 标记定位）。
 
 用法:
     python tools/inline-ai.py
@@ -17,7 +20,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "web" / "atlas-ai-consult.js"
-TARGETS = [ROOT / "web" / "index.html", ROOT / "index.html"]
+TARGETS = [ROOT / "index.html"]
 
 START = "<!-- ATLAS-AI:INLINE-START -->"
 END = "<!-- ATLAS-AI:INLINE-END -->"
