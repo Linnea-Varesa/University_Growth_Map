@@ -357,8 +357,8 @@
   .atlas-ai-fab:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 12px 28px -8px color-mix(in srgb,var(--site-accent,#3f7d5a) 75%,transparent),inset 0 1px 0 rgba(255,255,255,.35)}
   .atlas-ai-fab:active{transform:scale(.93)}
   /* Qoder Sites 部署时会往右下角注入「Made with Qoder」徽标，正好压住按钮：整体让位 */
-  body.atlas-ai-with-badge .atlas-ai-fab{bottom:64px}
-  body.atlas-ai-with-badge .atlas-ai-panel{padding-bottom:44px}
+  body.atlas-ai-with-badge .atlas-ai-fab,html:has(#qoder-sites-watermark) body .atlas-ai-fab{bottom:76px}
+  body.atlas-ai-with-badge .atlas-ai-panel,html:has(#qoder-sites-watermark) body .atlas-ai-panel{padding-bottom:56px}
   .atlas-ai-fab svg{width:16px;height:16px}
 
   .atlas-ai-mask{position:fixed;inset:0;background:rgba(8,18,12,.4);z-index:9999;backdrop-filter:blur(3px);
@@ -561,7 +561,11 @@
     // 徽标由部署平台在 DOMContentLoaded 时注入，而且挂在 <html> 上（不是 body），
     // 所以观察 documentElement，再补一个延时兜底
     try {
-      new MutationObserver(avoidBadge).observe(document.documentElement, { childList: true });
+      new MutationObserver(avoidBadge).observe(document.documentElement, {
+        childList: true, subtree: true, attributes: true, attributeFilter: ['id']
+      });
+      setTimeout(avoidBadge, 0);
+      setTimeout(avoidBadge, 250);
       setTimeout(avoidBadge, 2000);
     } catch (_) {}
   }
